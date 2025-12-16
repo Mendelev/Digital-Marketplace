@@ -50,6 +50,11 @@
       "type": "java.lang.Integer",
       "sourceType": "com.marketplace.auth.config.UserServiceProperties",
       "defaultValue": 0
+    },
+    {
+      "name": "user-service.shared-secret",
+      "type": "java.lang.String",
+      "sourceType": "com.marketplace.auth.config.UserServiceProperties"
     }
   ],
   "hints": []

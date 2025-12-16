@@ -16,6 +16,9 @@ public record UserServiceProperties(
     @NotBlank(message = "User service base URL must be configured")
     String baseUrl,
     
+    @NotBlank(message = "Shared secret must be configured")
+    String sharedSecret,
+    
     @Min(value = 100, message = "Connect timeout must be at least 100ms")
     int connectTimeoutMs,
     

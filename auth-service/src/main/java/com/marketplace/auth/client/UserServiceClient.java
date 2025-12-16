@@ -26,6 +26,7 @@ public class UserServiceClient {
 
     private static final Logger log = LoggerFactory.getLogger(UserServiceClient.class);
     private static final String CREATE_USER_ENDPOINT = "/api/v1/users";
+    private static final String SERVICE_SECRET_HEADER = "X-Service-Secret";
 
     private final RestTemplate restTemplate;
     private final UserServiceProperties properties;
@@ -51,6 +52,7 @@ public class UserServiceClient {
             
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set(SERVICE_SECRET_HEADER, properties.sharedSecret());
             
             HttpEntity<CreateUserRequest> httpEntity = new HttpEntity<>(request, headers);
             

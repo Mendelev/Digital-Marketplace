@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: user-service
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5463/user_db
+    username: user_user
+    password: user_pass
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          lob:
+            non_contextual_creation: true
+  
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    date-format: yyyy-MM-dd'T'HH:mm:ss.SSS
+    time-zone: UTC
+
+server:
+  port: 8081
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Auth Service Integration
+auth-service:
+  base-url: http://localhost:8080
+  public-key-endpoint: /api/v1/auth/public-key
+  public-key-cache-ttl-minutes: 60
+  shared-secret: ${AUTH_SERVICE_SHARED_SECRET:dev-secret-change-in-production}
+  connect-timeout-ms: 5000
+  read-timeout-ms: 10000
+
+# User Service Configuration
+user-service:
+  max-addresses-per-user: 10
+
+# Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      authService:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.marketplace.user: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+
+# OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha

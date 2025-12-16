@@ -53,7 +53,8 @@ jwt:
 
 # User Service Client Configuration
 user-service:
-  base-url: http://localhost:3001
+  base-url: http://localhost:8081
+  shared-secret: ${USER_SERVICE_SHARED_SECRET:dev-secret-change-in-production}
   connect-timeout-ms: 5000
   read-timeout-ms: 10000
 
