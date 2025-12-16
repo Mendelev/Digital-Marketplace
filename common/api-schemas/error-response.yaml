@@ -1,0 +1,44 @@
+openapi: 3.0.3
+info:
+  title: Common API Schemas
+  description: Shared schema definitions for Digital Marketplace services
+  version: 1.0.0
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      description: Standard error response format used across all services
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+        - path
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when error occurred
+          example: "2025-12-16T10:30:45.123Z"
+        status:
+          type: integer
+          description: HTTP status code
+          example: 400
+        error:
+          type: string
+          description: Error type or category
+          example: "Bad Request"
+        message:
+          type: string
+          description: Human-readable error description
+          example: "Email address is already registered"
+        path:
+          type: string
+          description: Request path that caused the error
+          example: "/api/v1/auth/register"
+        correlationId:
+          type: string
+          format: uuid
+          description: Unique identifier for request tracing
+          example: "550e8400-e29b-41d4-a716-446655440000"

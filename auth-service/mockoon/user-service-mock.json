@@ -1,0 +1,169 @@
+{
+  "uuid": "user-service-mock",
+  "lastMigration": 32,
+  "name": "User Service Mock",
+  "endpointPrefix": "",
+  "latency": 0,
+  "port": 3001,
+  "hostname": "0.0.0.0",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "health-check",
+      "type": "http",
+      "documentation": "Health check endpoint",
+      "method": "get",
+      "endpoint": "health",
+      "responses": [
+        {
+          "uuid": "health-response",
+          "body": "{\"status\": \"UP\"}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Health OK",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id"
+        }
+      ],
+      "enabled": true,
+      "responseMode": null
+    },
+    {
+      "uuid": "create-user",
+      "type": "http",
+      "documentation": "Create a new user",
+      "method": "post",
+      "endpoint": "api/v1/users",
+      "responses": [
+        {
+          "uuid": "create-user-success",
+          "body": "{\n  \"userId\": \"{{faker 'string.uuid'}}\",\n  \"email\": \"{{body 'email'}}\",\n  \"name\": \"{{body 'name' 'New User'}}\",\n  \"phone\": null,\n  \"roles\": {{body 'roles' '[\"CUSTOMER\"]'}},\n  \"createdAt\": \"{{now}}\",\n  \"updatedAt\": \"{{now}}\"\n}",
+          "latency": 100,
+          "statusCode": 201,
+          "label": "User created successfully",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "X-Correlation-ID",
+              "value": "{{header 'X-Correlation-ID' '{{faker \"string.uuid\"}}'}}"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id"
+        },
+        {
+          "uuid": "create-user-duplicate",
+          "body": "{\n  \"timestamp\": \"{{now}}\",\n  \"status\": 409,\n  \"error\": \"Conflict\",\n  \"message\": \"User with this email already exists\",\n  \"path\": \"/api/v1/users\",\n  \"correlationId\": \"{{header 'X-Correlation-ID' '{{faker \"string.uuid\"}}'}}\"\n}",
+          "latency": 50,
+          "statusCode": 409,
+          "label": "Duplicate email",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "email",
+              "value": "duplicate@test.com",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id"
+        },
+        {
+          "uuid": "create-user-error",
+          "body": "{\n  \"timestamp\": \"{{now}}\",\n  \"status\": 500,\n  \"error\": \"Internal Server Error\",\n  \"message\": \"Unexpected error occurred\",\n  \"path\": \"/api/v1/users\",\n  \"correlationId\": \"{{header 'X-Correlation-ID' '{{faker \"string.uuid\"}}'}}\"\n}",
+          "latency": 100,
+          "statusCode": 500,
+          "label": "Server error",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "email",
+              "value": "error@test.com",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id"
+        }
+      ],
+      "enabled": true,
+      "responseMode": null
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "cors": true,
+  "headers": [
+    {
+      "key": "Content-Type",
+      "value": "application/json"
+    }
+  ],
+  "proxyReqHeaders": [],
+  "proxyResHeaders": [],
+  "data": [],
+  "callbacks": []
+}

@@ -1,0 +1,56 @@
+{
+  "groups": [
+    {
+      "name": "jwt",
+      "type": "com.marketplace.auth.config.JwtProperties",
+      "sourceType": "com.marketplace.auth.config.JwtProperties"
+    },
+    {
+      "name": "user-service",
+      "type": "com.marketplace.auth.config.UserServiceProperties",
+      "sourceType": "com.marketplace.auth.config.UserServiceProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "jwt.access-token-expiration-minutes",
+      "type": "java.lang.Integer",
+      "sourceType": "com.marketplace.auth.config.JwtProperties",
+      "defaultValue": 0
+    },
+    {
+      "name": "jwt.private-key-path",
+      "type": "java.lang.String",
+      "sourceType": "com.marketplace.auth.config.JwtProperties"
+    },
+    {
+      "name": "jwt.public-key-path",
+      "type": "java.lang.String",
+      "sourceType": "com.marketplace.auth.config.JwtProperties"
+    },
+    {
+      "name": "jwt.refresh-token-expiration-days",
+      "type": "java.lang.Integer",
+      "sourceType": "com.marketplace.auth.config.JwtProperties",
+      "defaultValue": 0
+    },
+    {
+      "name": "user-service.base-url",
+      "type": "java.lang.String",
+      "sourceType": "com.marketplace.auth.config.UserServiceProperties"
+    },
+    {
+      "name": "user-service.connect-timeout-ms",
+      "type": "java.lang.Integer",
+      "sourceType": "com.marketplace.auth.config.UserServiceProperties",
+      "defaultValue": 0
+    },
+    {
+      "name": "user-service.read-timeout-ms",
+      "type": "java.lang.Integer",
+      "sourceType": "com.marketplace.auth.config.UserServiceProperties",
+      "defaultValue": 0
+    }
+  ],
+  "hints": []
+}
