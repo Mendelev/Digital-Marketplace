@@ -95,6 +95,13 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- Shared DTOs -->
+        <dependency>
+            <groupId>com.marketplace</groupId>
+            <artifactId>shared-dtos</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
         <!-- Logging -->
         <dependency>
             <groupId>net.logstash.logback</groupId>

@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
  * User Service Application - manages user profiles, addresses, and preferences.
  */
 @SpringBootApplication
-@EnableJpaAuditing
+@EnableJpaAuditing(dateTimeProviderRef = "dateTimeProvider")
 @ConfigurationPropertiesScan
 public class UserServiceApplication {
 

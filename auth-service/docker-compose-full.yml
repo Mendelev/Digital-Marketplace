@@ -3,8 +3,8 @@ version: '3.8'
 services:
   auth-service:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: auth-service/Dockerfile
     container_name: auth-service
     environment:
       # Database configuration (connects to host)
@@ -13,7 +13,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: auth_pass
       
       # User Service configuration (connects to host)
-      USER_SERVICE_BASE_URL: http://host.docker.internal:3001
+      USER_SERVICE_BASE_URL: http://host.docker.internal:8081
       
       # JWT configuration (using keys from container)
       JWT_PRIVATE_KEY_PATH: file:/app/keys/private_key.pem

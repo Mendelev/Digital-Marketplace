@@ -3,18 +3,22 @@ package com.marketplace.auth.service;
 import com.marketplace.auth.client.UserServiceClient;
 import com.marketplace.auth.config.JwtProperties;
 import com.marketplace.auth.domain.model.Credential;
+import com.marketplace.auth.domain.model.OrphanedUser;
 import com.marketplace.auth.domain.model.PasswordResetToken;
 import com.marketplace.auth.domain.model.RefreshToken;
 import com.marketplace.auth.domain.repository.CredentialRepository;
+import com.marketplace.auth.domain.repository.OrphanedUserRepository;
 import com.marketplace.auth.domain.repository.PasswordResetTokenRepository;
 import com.marketplace.auth.domain.repository.RefreshTokenRepository;
 import com.marketplace.auth.dto.auth.*;
-import com.marketplace.auth.dto.user.CreateUserRequest;
-import com.marketplace.auth.dto.user.UserResponse;
+import com.marketplace.auth.metrics.RegistrationMetrics;
+import com.marketplace.shared.dto.CreateUserRequest;
+import com.marketplace.shared.dto.UserResponse;
 import com.marketplace.auth.exception.*;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
+import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -45,58 +49,62 @@ public class AuthService {
     private final CredentialRepository credentialRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final OrphanedUserRepository orphanedUserRepository;
     private final UserServiceClient userServiceClient;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final JwtProperties jwtProperties;
+    private final RegistrationMetrics registrationMetrics;
     private final SecureRandom secureRandom;
 
     public AuthService(
             CredentialRepository credentialRepository,
             RefreshTokenRepository refreshTokenRepository,
             PasswordResetTokenRepository passwordResetTokenRepository,
+            OrphanedUserRepository orphanedUserRepository,
             UserServiceClient userServiceClient,
             JwtService jwtService,
             PasswordEncoder passwordEncoder,
-            JwtProperties jwtProperties) {
+            JwtProperties jwtProperties,
+            RegistrationMetrics registrationMetrics) {
         this.credentialRepository = credentialRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.orphanedUserRepository = orphanedUserRepository;
         this.userServiceClient = userServiceClient;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
         this.jwtProperties = jwtProperties;
+        this.registrationMetrics = registrationMetrics;
         this.secureRandom = new SecureRandom();
     }
 
     /**
      * Register a new user with credential creation and User Service integration.
+     * Implements orchestration pattern: creates user in User Service FIRST,
+     * then saves credentials. If credential save fails, performs compensating
+     * transaction to delete user from User Service.
      *
      * @param request registration request
      * @return authentication response with tokens
      */
-    @Transactional
     public AuthResponse register(RegisterRequest request) {
+        Timer.Sample timerSample = registrationMetrics.startRegistrationTimer();
         MDC.put("operation", "register");
         log.info("Processing registration for email: {}", request.email());
 
-        // Check if email already exists
-        if (credentialRepository.existsByEmail(request.email())) {
-            log.warn("Registration failed: email already exists - {}", request.email());
-            throw new DuplicateEmailException(request.email());
-        }
-
-        // Create credential
-        UUID userId = UUID.randomUUID();
-        String passwordHash = passwordEncoder.encode(request.password());
-        Credential credential = new Credential(userId, request.email(), passwordHash);
-        credential = credentialRepository.save(credential);
-        
-        log.debug("Credential created for user: {}", userId);
-        MDC.put("userId", userId.toString());
-
         try {
-            // Create user in User Service
+            // Check if email already exists
+            if (credentialRepository.existsByEmail(request.email())) {
+                log.warn("Registration failed: email already exists - {}", request.email());
+                registrationMetrics.incrementRegistrationFailure();
+                throw new DuplicateEmailException(request.email());
+            }
+
+            UUID userId = UUID.randomUUID();
+            MDC.put("userId", userId.toString());
+
+            // Step 1: Create user in User Service FIRST (outside transaction boundary)
             CreateUserRequest createUserRequest = new CreateUserRequest(
                     userId,
                     request.email(),
@@ -107,29 +115,84 @@ public class AuthService {
             UserResponse userResponse = userServiceClient.createUser(createUserRequest);
             log.info("User created successfully in User Service: {}", userId);
 
-            // Generate tokens
-            List<String> roles = List.of(DEFAULT_ROLE);
-            String accessToken = jwtService.generateAccessToken(userId, request.email(), roles);
-            String refreshToken = jwtService.generateRefreshToken(userId);
-
-            // Save hashed refresh token
-            saveRefreshToken(userId, refreshToken);
-
-            log.info("Registration completed successfully for user: {}", userId);
-            
-            return new AuthResponse(
-                    accessToken,
-                    refreshToken,
-                    jwtProperties.accessTokenExpirationMinutes() * 60,
-                    userId,
-                    request.email(),
-                    roles
-            );
-
-        } catch (UserServiceException e) {
-            log.error("Failed to create user in User Service, rolling back credential creation", e);
-            // Transaction will rollback automatically
+            // Step 2: Save credentials in Auth Service (within transaction)
+            try {
+                AuthResponse response = saveCredentialsAndGenerateTokens(userId, request);
+                registrationMetrics.incrementRegistrationSuccess();
+                registrationMetrics.recordRegistrationTime(timerSample);
+                return response;
+            } catch (Exception e) {
+                log.error("Failed to save credentials for user: {}. Initiating compensating transaction.", userId, e);
+                registrationMetrics.incrementRegistrationFailure();
+                
+                // Step 3: Compensating transaction - delete user from User Service
+                try {
+                    userServiceClient.deleteUser(userId);
+                    log.info("Successfully deleted user from User Service as part of compensating transaction: {}", userId);
+                    registrationMetrics.incrementCompensatingDeleteSuccess();
+                } catch (Exception deleteException) {
+                    // If compensating delete fails, save to orphaned_users table for cleanup
+                    log.error("Failed to delete user from User Service. Saving to orphaned_users table: {}", 
+                            userId, deleteException);
+                    registrationMetrics.incrementCompensatingDeleteFailure();
+                    saveOrphanedUser(userId, request.email());
+                }
+                
+                // Re-throw original exception to return error to client
+                throw e;
+            }
+        } catch (Exception e) {
+            registrationMetrics.recordRegistrationTime(timerSample);
             throw e;
+        }
+    }
+
+    /**
+     * Save credentials and generate tokens within a transaction.
+     * This method is separate to ensure transaction boundary is clear.
+     */
+    @Transactional
+    private AuthResponse saveCredentialsAndGenerateTokens(UUID userId, RegisterRequest request) {
+        // Create and save credential
+        String passwordHash = passwordEncoder.encode(request.password());
+        Credential credential = new Credential(userId, request.email(), passwordHash);
+        credential = credentialRepository.save(credential);
+        
+        log.debug("Credential created for user: {}", userId);
+
+        // Generate tokens
+        List<String> roles = List.of(DEFAULT_ROLE);
+        String accessToken = jwtService.generateAccessToken(userId, request.email(), roles);
+        String refreshToken = jwtService.generateRefreshToken(userId);
+
+        // Save hashed refresh token
+        saveRefreshToken(userId, refreshToken);
+
+        log.info("Registration completed successfully for user: {}", userId);
+        
+        return new AuthResponse(
+                accessToken,
+                refreshToken,
+                jwtProperties.accessTokenExpirationMinutes() * 60,
+                userId,
+                request.email(),
+                roles
+        );
+    }
+
+    /**
+     * Save orphaned user record for cleanup scheduler.
+     */
+    @Transactional
+    private void saveOrphanedUser(UUID userId, String email) {
+        try {
+            OrphanedUser orphanedUser = new OrphanedUser(userId, email);
+            orphanedUserRepository.save(orphanedUser);
+            registrationMetrics.incrementOrphanedUserSaved();
+            log.info("Saved orphaned user record for cleanup: userId={}, email={}", userId, email);
+        } catch (Exception e) {
+            log.error("Failed to save orphaned user record: userId={}, email={}", userId, email, e);
+            // Don't throw - this is best effort logging
         }
     }
 
