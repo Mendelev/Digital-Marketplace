@@ -1,9 +1,9 @@
 package com.marketplace.user.controller;
 
 import com.marketplace.user.config.AuthServiceProperties;
-import com.marketplace.user.dto.user.CreateUserRequest;
-import com.marketplace.user.dto.user.UpdateUserRequest;
-import com.marketplace.user.dto.user.UserResponse;
+import com.marketplace.shared.dto.CreateUserRequest;
+import com.marketplace.shared.dto.UpdateUserRequest;
+import com.marketplace.shared.dto.UserResponse;
 import com.marketplace.user.exception.InvalidSharedSecretException;
 import com.marketplace.user.exception.UnauthorizedException;
 import com.marketplace.user.security.AuthenticatedUser;
@@ -129,5 +129,35 @@ public class UserController {
 
         UserResponse response = userService.updateUser(userId, request, authenticatedUser);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Delete user endpoint - internal operation for compensating transactions.
+     * Called by Auth Service when credential save fails during registration.
+     * Requires shared secret header for authorization.
+     */
+    @DeleteMapping("/{userId}")
+    @Operation(summary = "Delete user (Internal)", 
+               description = "Delete user - internal operation for Auth Service compensating transactions")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "User deleted successfully"),
+        @ApiResponse(responseCode = "403", description = "Invalid shared secret"),
+        @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable UUID userId,
+            @RequestHeader(value = SERVICE_SECRET_HEADER, required = false) String sharedSecret) {
+
+        log.info("Delete user request received for userId: {}", userId);
+
+        // Validate shared secret
+        if (sharedSecret == null || !sharedSecret.equals(authServiceProperties.sharedSecret())) {
+            log.error("Invalid or missing shared secret in delete user request");
+            throw new InvalidSharedSecretException("Invalid service authentication");
+        }
+
+        userService.deleteUser(userId);
+        log.info("User deleted successfully: {}", userId);
+        return ResponseEntity.noContent().build();
     }
 }

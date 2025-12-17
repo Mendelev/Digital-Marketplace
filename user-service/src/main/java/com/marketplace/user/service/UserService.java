@@ -4,9 +4,9 @@ import com.marketplace.user.domain.model.User;
 import com.marketplace.user.domain.model.UserPreferences;
 import com.marketplace.user.domain.repository.UserPreferencesRepository;
 import com.marketplace.user.domain.repository.UserRepository;
-import com.marketplace.user.dto.user.CreateUserRequest;
-import com.marketplace.user.dto.user.UpdateUserRequest;
-import com.marketplace.user.dto.user.UserResponse;
+import com.marketplace.shared.dto.CreateUserRequest;
+import com.marketplace.shared.dto.UpdateUserRequest;
+import com.marketplace.shared.dto.UserResponse;
 import com.marketplace.user.exception.DuplicateEmailException;
 import com.marketplace.user.exception.ResourceNotFoundException;
 import com.marketplace.user.exception.UnauthorizedException;
@@ -43,6 +43,7 @@ public class UserService {
     /**
      * Create a new user (called by Auth Service during registration).
      * Automatically creates default preferences.
+     * Idempotent: if user with same userId already exists, returns existing user.
      */
     @Transactional
     public UserResponse createUser(CreateUserRequest request) {
@@ -51,7 +52,14 @@ public class UserService {
 
         log.info("Creating user: {}", request.email());
 
-        // Check for duplicate email
+        // Idempotency check: if user with this userId exists, return existing user
+        Optional<User> existingUser = userRepository.findById(request.userId());
+        if (existingUser.isPresent()) {
+            log.info("User with userId already exists, returning existing user: {}", request.userId());
+            return toResponse(existingUser.get());
+        }
+
+        // Check for duplicate email (after userId check)
         if (userRepository.existsByEmail(request.email())) {
             throw new DuplicateEmailException("Email already exists: " + request.email());
         }
@@ -141,6 +149,30 @@ public class UserService {
         eventLogger.logEvent("UserUpdated", "USER", user.getUserId(), changedFields);
 
         return toResponse(user);
+    }
+
+    /**
+     * Delete user (internal operation for compensating transactions).
+     * This is a hard delete that cascades to related entities (preferences, addresses).
+     * Called by Auth Service when credential save fails during registration.
+     */
+    @Transactional
+    public void deleteUser(UUID userId) {
+        MDC.put("operation", "deleteUser");
+        MDC.put("userId", userId.toString());
+
+        log.info("Deleting user: {}", userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+
+        // Delete is cascaded to preferences and addresses via JPA cascade settings
+        userRepository.delete(user);
+
+        log.info("User deleted successfully: {}", userId);
+
+        // Log event
+        eventLogger.logEvent("UserDeleted", "USER", userId, Map.of("email", user.getEmail()));
     }
 
     /**

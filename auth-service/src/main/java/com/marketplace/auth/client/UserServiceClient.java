@@ -1,12 +1,13 @@
 package com.marketplace.auth.client;
 
 import com.marketplace.auth.config.UserServiceProperties;
-import com.marketplace.auth.dto.user.CreateUserRequest;
-import com.marketplace.auth.dto.user.UserResponse;
+import com.marketplace.shared.dto.CreateUserRequest;
+import com.marketplace.shared.dto.UserResponse;
 import com.marketplace.auth.exception.UserServiceException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,6 +17,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.UUID;
 
 /**
  * Client for interacting with User Service.
@@ -27,6 +30,7 @@ public class UserServiceClient {
     private static final Logger log = LoggerFactory.getLogger(UserServiceClient.class);
     private static final String CREATE_USER_ENDPOINT = "/api/v1/users";
     private static final String SERVICE_SECRET_HEADER = "X-Service-Secret";
+    private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
 
     private final RestTemplate restTemplate;
     private final UserServiceProperties properties;
@@ -53,6 +57,12 @@ public class UserServiceClient {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set(SERVICE_SECRET_HEADER, properties.sharedSecret());
+            
+            // Propagate correlation ID for distributed tracing
+            String correlationId = MDC.get("correlationId");
+            if (correlationId != null) {
+                headers.set(CORRELATION_ID_HEADER, correlationId);
+            }
             
             HttpEntity<CreateUserRequest> httpEntity = new HttpEntity<>(request, headers);
             
@@ -87,6 +97,56 @@ public class UserServiceClient {
     }
 
     /**
+     * Delete a user from the User Service (compensating transaction).
+     * This is an internal operation used for cleanup when Auth Service fails.
+     *
+     * @param userId the user ID to delete
+     * @throws UserServiceException if user deletion fails
+     */
+    @CircuitBreaker(name = "userService", fallbackMethod = "deleteUserFallback")
+    public void deleteUser(UUID userId) {
+        log.info("Deleting user from User Service: userId={}", userId);
+        
+        try {
+            String url = properties.baseUrl() + CREATE_USER_ENDPOINT + "/" + userId;
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(SERVICE_SECRET_HEADER, properties.sharedSecret());
+            
+            // Propagate correlation ID for distributed tracing
+            String correlationId = MDC.get("correlationId");
+            if (correlationId != null) {
+                headers.set(CORRELATION_ID_HEADER, correlationId);
+            }
+            
+            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
+            
+            restTemplate.exchange(
+                    url,
+                    org.springframework.http.HttpMethod.DELETE,
+                    httpEntity,
+                    Void.class
+            );
+            
+            log.info("User deleted successfully from User Service: userId={}", userId);
+            
+        } catch (HttpClientErrorException e) {
+            log.error("Client error deleting user from User Service: status={}, userId={}", 
+                    e.getStatusCode(), userId);
+            throw new UserServiceException("User Service returned client error during deletion: " + e.getStatusCode(), e);
+            
+        } catch (HttpServerErrorException e) {
+            log.error("Server error deleting user from User Service: status={}, userId={}", 
+                    e.getStatusCode(), userId);
+            throw new UserServiceException("User Service returned server error during deletion: " + e.getStatusCode(), e);
+            
+        } catch (ResourceAccessException e) {
+            log.error("Failed to connect to User Service for deletion: userId={}", userId);
+            throw new UserServiceException("Failed to connect to User Service for deletion", e);
+        }
+    }
+
+    /**
      * Fallback method when User Service is unavailable.
      * This method is called when circuit breaker is open.
      */
@@ -95,5 +155,15 @@ public class UserServiceClient {
         log.error("Circuit breaker activated for User Service. Fallback triggered for user: {}", 
                 request.email(), e);
         throw new UserServiceException("User Service is currently unavailable. Please try again later.", e);
+    }
+
+    /**
+     * Fallback method for deleteUser when User Service is unavailable.
+     */
+    @SuppressWarnings("unused")
+    private void deleteUserFallback(UUID userId, Exception e) {
+        log.error("Circuit breaker activated for User Service. Delete fallback triggered for user: {}", 
+                userId, e);
+        throw new UserServiceException("User Service is currently unavailable for deletion.", e);
     }
 }

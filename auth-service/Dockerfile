@@ -1,14 +1,22 @@
 # Build stage
 FROM maven:3.9-eclipse-temurin-21-alpine AS build
 
+WORKDIR /workspace
+
+# First, build and install shared-dtos module
+COPY common/shared-dtos/pom.xml ./common/shared-dtos/
+COPY common/shared-dtos/src ./common/shared-dtos/src
+RUN cd common/shared-dtos && mvn clean install -DskipTests -B
+
+# Now build auth-service
 WORKDIR /app
 
 # Copy pom.xml and download dependencies (cached layer)
-COPY pom.xml .
+COPY auth-service/pom.xml .
 RUN mvn dependency:go-offline -B
 
 # Copy source code and build
-COPY src ./src
+COPY auth-service/src ./src
 RUN mvn clean package -DskipTests -B
 
 # Runtime stage
@@ -24,7 +32,7 @@ RUN addgroup -g 1001 authservice && \
 COPY --from=build /app/target/auth-service-*.jar app.jar
 
 # Copy RSA keys (if they exist)
-COPY --chown=authservice:authservice src/main/resources/keys ./keys
+COPY --chown=authservice:authservice auth-service/src/main/resources/keys ./keys
 
 # Change ownership
 RUN chown -R authservice:authservice /app

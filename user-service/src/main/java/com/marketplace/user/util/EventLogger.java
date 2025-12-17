@@ -63,4 +63,71 @@ public class EventLogger {
             MDC.remove("aggregateId");
         }
     }
+
+    /**
+     * Log address created event.
+     */
+    public void logAddressCreated(com.marketplace.user.domain.model.Address address) {
+        Map<String, Object> snapshot = Map.of(
+                "label", address.getLabel(),
+                "country", address.getCountry(),
+                "city", address.getCity()
+        );
+        logEvent("AddressCreated", "ADDRESS", address.getAddressId(), snapshot);
+    }
+
+    /**
+     * Log address updated event with changed fields.
+     */
+    public void logAddressUpdated(com.marketplace.user.domain.model.Address oldAddress, 
+                                  com.marketplace.user.domain.model.Address newAddress) {
+        Map<String, Object> changes = new java.util.HashMap<>();
+        
+        if (!oldAddress.getLabel().equals(newAddress.getLabel())) {
+            changes.put("label", newAddress.getLabel());
+        }
+        if (!oldAddress.getCountry().equals(newAddress.getCountry())) {
+            changes.put("country", newAddress.getCountry());
+        }
+        if (!oldAddress.getState().equals(newAddress.getState())) {
+            changes.put("state", newAddress.getState());
+        }
+        if (!oldAddress.getCity().equals(newAddress.getCity())) {
+            changes.put("city", newAddress.getCity());
+        }
+        if (!oldAddress.getZip().equals(newAddress.getZip())) {
+            changes.put("zip", newAddress.getZip());
+        }
+        if (!oldAddress.getStreet().equals(newAddress.getStreet())) {
+            changes.put("street", newAddress.getStreet());
+        }
+        if (!oldAddress.getNumber().equals(newAddress.getNumber())) {
+            changes.put("number", newAddress.getNumber());
+        }
+        
+        if (!changes.isEmpty()) {
+            logEvent("AddressUpdated", "ADDRESS", newAddress.getAddressId(), changes);
+        }
+    }
+
+    /**
+     * Log address deleted event.
+     */
+    public void logAddressDeleted(com.marketplace.user.domain.model.Address address) {
+        Map<String, Object> snapshot = Map.of(
+                "label", address.getLabel()
+        );
+        logEvent("AddressDeleted", "ADDRESS", address.getAddressId(), snapshot);
+    }
+
+    /**
+     * Log default address changed event.
+     */
+    public void logDefaultAddressChanged(com.marketplace.user.domain.model.Address address, String type) {
+        Map<String, Object> data = Map.of(
+                "defaultType", type,
+                "label", address.getLabel()
+        );
+        logEvent("DefaultAddressChanged", "ADDRESS", address.getAddressId(), data);
+    }
 }

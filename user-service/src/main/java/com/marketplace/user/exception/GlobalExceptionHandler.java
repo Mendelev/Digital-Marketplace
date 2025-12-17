@@ -111,6 +111,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(
+            ValidationException ex, HttpServletRequest request) {
+        log.warn("Validation error: {}", ex.getMessage());
+        
+        ErrorResponse error = ErrorResponse.of(
+            HttpStatus.UNPROCESSABLE_ENTITY.value(),
+            "Unprocessable Entity",
+            ex.getMessage(),
+            request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error);
+    }
+
     @ExceptionHandler(AuthServiceException.class)
     public ResponseEntity<ErrorResponse> handleAuthServiceException(
             AuthServiceException ex, HttpServletRequest request) {

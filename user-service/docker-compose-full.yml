@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  user-service:
+    build:
+      context: ..
+      dockerfile: user-service/Dockerfile
+    container_name: user-service
+    environment:
+      # Database configuration (connects to host)
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5463/user_db
+      SPRING_DATASOURCE_USERNAME: user_user
+      SPRING_DATASOURCE_PASSWORD: user_pass
+      
+      # Auth Service configuration (connects to host)
+      AUTH_SERVICE_BASE_URL: http://host.docker.internal:8080
+      
+      # JPA configuration
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      
+      # Logging
+      LOGGING_LEVEL_COM_MARKETPLACE_USER: DEBUG
+    ports:
+      - "8081:8081"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
