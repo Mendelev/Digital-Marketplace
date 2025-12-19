@@ -244,8 +244,10 @@ public class AuthService {
             log.debug("Failed login count reset for user: {}", credential.getUserId());
         }
 
+        // Fetch user roles from User Service
+        List<String> roles = fetchUserRoles(credential.getUserId());
+        
         // Generate tokens
-        List<String> roles = List.of(DEFAULT_ROLE);
         String accessToken = jwtService.generateAccessToken(
                 credential.getUserId(), 
                 credential.getEmail(), 
@@ -256,7 +258,7 @@ public class AuthService {
         // Save hashed refresh token
         saveRefreshToken(credential.getUserId(), refreshToken);
 
-        log.info("Login successful for user: {}", credential.getUserId());
+        log.info("Login successful for user: {} with roles: {}", credential.getUserId(), roles);
 
         return new AuthResponse(
                 accessToken,
@@ -266,6 +268,24 @@ public class AuthService {
                 credential.getEmail(),
                 roles
         );
+    }
+
+    /**
+     * Fetch user roles from User Service.
+     * Falls back to default role if User Service is unavailable.
+     */
+    private List<String> fetchUserRoles(UUID userId) {
+        try {
+            UserResponse userResponse = userServiceClient.getUserById(userId);
+            if (userResponse != null && userResponse.roles() != null && !userResponse.roles().isEmpty()) {
+                log.debug("Fetched roles from User Service for user {}: {}", userId, userResponse.roles());
+                return userResponse.roles();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch roles from User Service for user {}: {}. Using default role.", 
+                    userId, e.getMessage());
+        }
+        return List.of(DEFAULT_ROLE);
     }
 
     /**

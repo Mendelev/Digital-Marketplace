@@ -1,0 +1,96 @@
+spring:
+  application:
+    name: catalog-service
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5464/catalog_db
+    username: ${DB_USERNAME:catalog_user}
+    password: ${DB_PASSWORD:catalog_pass}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  
+  # Kafka Configuration
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      bindings:
+        product-events-out-0:
+          destination: product-events
+          content-type: application/json
+  
+  # Jackson Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+    date-format: yyyy-MM-dd'T'HH:mm:ss.SSSXXX
+
+# Search Service Integration
+search-service:
+  base-url: ${SEARCH_SERVICE_BASE_URL:http://localhost:8084}
+
+# Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      searchService:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+
+# JWT Configuration (using RSA public key from Auth Service)
+jwt:
+  public-key-location: classpath:keys/public_key.pem
+
+server:
+  port: 8082
+
+# Auth Service Integration
+auth-service:
+  base-url: ${AUTH_SERVICE_BASE_URL:http://localhost:8080}
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    filter: true
+    persistAuthorization: true
+    tryItOutEnabled: true
+    defaultModelsExpandDepth: 1
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Logging
+logging:
+  level:
+    com.marketplace.catalog: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

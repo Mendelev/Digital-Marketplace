@@ -160,4 +160,32 @@ public class UserController {
         log.info("User deleted successfully: {}", userId);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Get user by ID - internal endpoint for Auth Service.
+     * Fetches user roles during login. Requires shared secret header.
+     */
+    @GetMapping("/internal/{userId}")
+    @Operation(summary = "Get user (Internal)", 
+               description = "Get user by ID - internal operation for Auth Service to fetch roles")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "User retrieved successfully"),
+        @ApiResponse(responseCode = "403", description = "Invalid shared secret"),
+        @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    public ResponseEntity<UserResponse> getUserByIdInternal(
+            @PathVariable UUID userId,
+            @RequestHeader(value = SERVICE_SECRET_HEADER, required = false) String sharedSecret) {
+
+        log.debug("Internal get user request received for userId: {}", userId);
+
+        // Validate shared secret
+        if (sharedSecret == null || !sharedSecret.equals(authServiceProperties.sharedSecret())) {
+            log.error("Invalid or missing shared secret in internal get user request");
+            throw new InvalidSharedSecretException("Invalid service authentication");
+        }
+
+        UserResponse response = userService.getUserByIdInternal(userId);
+        return ResponseEntity.ok(response);
+    }
 }

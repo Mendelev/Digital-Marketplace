@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: search-service
+
+  elasticsearch:
+    uris: http://localhost:9200
+    socket-timeout: 10s
+    connection-timeout: 5s
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: search-service-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    listener:
+      ack-mode: manual
+
+server:
+  port: 8085
+
+search:
+  index:
+    name: products
+    number-of-shards: 1
+    number-of-replicas: 1
+  pagination:
+    default-page-size: 20
+    max-page-size: 100
+  kafka:
+    topic: product-events
+
+# OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    filter: true
+    try-it-out-enabled: true
+    persist-authorization: true
+    default-models-expand-depth: 1
+
+logging:
+  level:
+    root: INFO
+    com.marketplace.search: DEBUG
+    org.springframework.kafka: INFO
+    org.elasticsearch: INFO

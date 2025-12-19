@@ -210,4 +210,20 @@ public class UserService {
                 user.getUpdatedAt()
         );
     }
+
+    /**
+     * Get user by ID - internal method for service-to-service calls.
+     * Used by Auth Service to fetch roles during login.
+     */
+    public UserResponse getUserByIdInternal(UUID userId) {
+        MDC.put("operation", "getUserByIdInternal");
+        MDC.put("userId", userId.toString());
+
+        log.debug("Internal fetch for user: {}", userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+
+        return toResponse(user);
+    }
 }
