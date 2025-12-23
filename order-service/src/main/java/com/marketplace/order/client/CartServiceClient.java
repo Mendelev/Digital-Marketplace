@@ -1,5 +1,6 @@
 package com.marketplace.order.client;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.marketplace.order.config.CartServiceProperties;
 import com.marketplace.order.exception.CartServiceException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -86,6 +87,7 @@ public class CartServiceClient {
             UUID cartId,
             UUID userId,
             String status,
+            @JsonProperty("subtotal")
             BigDecimal subtotalAmount,
             List<CartItemResponse> items
     ) {
@@ -101,6 +103,7 @@ public class CartServiceClient {
             String titleSnapshot,
             BigDecimal unitPriceSnapshot,
             Integer quantity,
+            @JsonProperty("subtotal")
             BigDecimal lineTotalAmount
     ) {
     }

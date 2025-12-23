@@ -1,5 +1,6 @@
 package com.marketplace.user.controller;
 
+import com.marketplace.user.config.AuthServiceProperties;
 import com.marketplace.user.dto.address.AddressResponse;
 import com.marketplace.user.dto.address.CreateAddressRequest;
 import com.marketplace.user.dto.address.UpdateAddressRequest;
@@ -30,11 +31,14 @@ import java.util.UUID;
 public class AddressController {
 
     private static final Logger logger = LoggerFactory.getLogger(AddressController.class);
+    private static final String SERVICE_SECRET_HEADER = "X-Service-Secret";
 
     private final AddressService addressService;
+    private final AuthServiceProperties authServiceProperties;
 
-    public AddressController(AddressService addressService) {
+    public AddressController(AddressService addressService, AuthServiceProperties authServiceProperties) {
         this.addressService = addressService;
+        this.authServiceProperties = authServiceProperties;
     }
 
     /**
@@ -76,6 +80,31 @@ public class AddressController {
         logger.debug("Get address request: {} for user: {}", addressId, authenticatedUser.getUserId());
 
         AddressResponse response = addressService.getAddress(authenticatedUser.getUserId(), addressId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get address by ID - internal endpoint for service-to-service calls.
+     * Requires shared secret header.
+     */
+    @GetMapping("/internal/{addressId}")
+    @Operation(summary = "Get address (Internal)", description = "Get address by ID for internal service calls")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Address retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Invalid shared secret"),
+            @ApiResponse(responseCode = "404", description = "Address not found")
+    })
+    public ResponseEntity<AddressResponse> getAddressInternal(
+            @Parameter(description = "Address ID", required = true)
+            @PathVariable UUID addressId,
+            @RequestHeader(value = SERVICE_SECRET_HEADER, required = false) String sharedSecret) {
+
+        if (sharedSecret == null || !sharedSecret.equals(authServiceProperties.sharedSecret())) {
+            logger.error("Invalid or missing shared secret in internal get address request");
+            throw new com.marketplace.user.exception.InvalidSharedSecretException("Invalid service authentication");
+        }
+
+        AddressResponse response = addressService.getAddressInternal(addressId);
         return ResponseEntity.ok(response);
     }
 

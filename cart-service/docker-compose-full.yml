@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  cart-service:
+    build:
+      context: ..
+      dockerfile: cart-service/Dockerfile
+    container_name: cart-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5465/cart_db
+      SPRING_DATASOURCE_USERNAME: cart_user
+      SPRING_DATASOURCE_PASSWORD: cart_pass
+      CATALOG_SERVICE_BASE_URL: http://host.docker.internal:8082
+      CATALOG_SERVICE_CONNECT_TIMEOUT_MS: 5000
+      CATALOG_SERVICE_READ_TIMEOUT_MS: 10000
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

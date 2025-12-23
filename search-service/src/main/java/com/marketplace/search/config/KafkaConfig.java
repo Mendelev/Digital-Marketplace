@@ -44,7 +44,9 @@ public class KafkaConfig {
         config.put(JsonDeserializer.TYPE_MAPPINGS,
                 "ProductCreatedEvent:com.marketplace.search.consumer.event.ProductCreatedEvent," +
                 "ProductUpdatedEvent:com.marketplace.search.consumer.event.ProductUpdatedEvent," +
-                "ProductDeletedEvent:com.marketplace.search.consumer.event.ProductDeletedEvent");
+                "ProductDeletedEvent:com.marketplace.search.consumer.event.ProductDeletedEvent," +
+                "ProductEvent:com.marketplace.search.consumer.event.CatalogProductEvent," +
+                "com.marketplace.catalog.domain.model.ProductEvent:com.marketplace.search.consumer.event.CatalogProductEvent");
 
         return new DefaultKafkaConsumerFactory<>(config);
     }

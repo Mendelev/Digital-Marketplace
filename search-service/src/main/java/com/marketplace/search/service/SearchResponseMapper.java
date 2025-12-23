@@ -13,6 +13,9 @@ import org.springframework.data.elasticsearch.core.AggregationsContainer;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,8 +62,8 @@ public class SearchResponseMapper {
                 doc.getAvailableColors(),
                 doc.getThumbnailUrl(),
                 doc.getFeatured(),
-                doc.getCreatedAt(),
-                doc.getUpdatedAt(),
+                toOffsetDateTime(doc.getCreatedAt()),
+                toOffsetDateTime(doc.getUpdatedAt()),
                 hit.getScore()
         );
     }
@@ -85,9 +88,12 @@ public class SearchResponseMapper {
     /**
      * Extract terms facet from aggregation.
      */
+    @SuppressWarnings("unchecked")
     private List<FacetBucket> extractTermsFacet(AggregationsContainer<?> aggregationsContainer, String aggName) {
         try {
-            var aggregation = aggregationsContainer.aggregations().get(aggName);
+            var aggregations = (java.util.Map<String, co.elastic.clients.elasticsearch._types.aggregations.Aggregate>)
+                    aggregationsContainer.aggregations();
+            var aggregation = aggregations.get(aggName);
             if (aggregation != null && aggregation.isSterms()) {
                 StringTermsAggregate sterms = aggregation.sterms();
                 return sterms.buckets().array().stream()
@@ -103,9 +109,12 @@ public class SearchResponseMapper {
     /**
      * Extract price range facet from aggregation.
      */
+    @SuppressWarnings("unchecked")
     private List<PriceRangeBucket> extractPriceRangeFacet(AggregationsContainer<?> aggregationsContainer, String aggName) {
         try {
-            var aggregation = aggregationsContainer.aggregations().get(aggName);
+            var aggregations = (java.util.Map<String, co.elastic.clients.elasticsearch._types.aggregations.Aggregate>)
+                    aggregationsContainer.aggregations();
+            var aggregation = aggregations.get(aggName);
             if (aggregation != null && aggregation.isRange()) {
                 RangeAggregate range = aggregation.range();
                 return range.buckets().array().stream()
@@ -154,5 +163,9 @@ public class SearchResponseMapper {
                 page < totalPages - 1,
                 page > 0
         );
+    }
+
+    private OffsetDateTime toOffsetDateTime(Instant value) {
+        return value != null ? OffsetDateTime.ofInstant(value, ZoneOffset.UTC) : null;
     }
 }

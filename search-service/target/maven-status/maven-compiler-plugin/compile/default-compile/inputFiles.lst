@@ -1,6 +1,7 @@
 /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/search-service/src/main/java/com/marketplace/search/dto/request/SortOptions.java
 /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/search-service/src/main/java/com/marketplace/search/dto/response/PaginationInfo.java
 /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/search-service/src/main/java/com/marketplace/search/SearchServiceApplication.java
+/Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/search-service/src/main/java/com/marketplace/search/consumer/event/CatalogProductEvent.java
 /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/search-service/src/main/java/com/marketplace/search/service/SearchService.java
 /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/search-service/src/main/java/com/marketplace/search/exception/SearchException.java
 /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/search-service/src/main/java/com/marketplace/search/exception/GlobalExceptionHandler.java
@@ -34,3 +35,4 @@
 /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/search-service/src/main/java/com/marketplace/search/dto/request/SearchRequest.java
 /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/search-service/src/main/java/com/marketplace/search/config/OpenApiConfig.java
 /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/search-service/src/main/java/com/marketplace/search/dto/request/SearchFilters.java
+/Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/search-service/src/main/java/com/marketplace/search/config/PropertiesConfig.java

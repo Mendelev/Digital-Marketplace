@@ -62,6 +62,7 @@ The Order Service is a critical component of the Digital Marketplace platform th
 - Running instances of:
   - Cart Service (port 8083)
   - User Service (port 8081)
+  - Catalog Service (required by Cart Service)
 
 ## Configuration
 
@@ -109,6 +110,29 @@ order-service:
   flat-shipping-rate: 9.99
   payment-success-rate: 90
   reservation-ttl-minutes: 15
+```
+
+## Docker
+
+### Start PostgreSQL (Local)
+
+```bash
+cd /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/order-service
+docker-compose up -d
+```
+
+### Build and Run Order Service
+
+```bash
+cd /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/order-service
+docker-compose -f docker-compose-full.yml up -d --build
+```
+
+### Start Kafka (if not already running)
+
+```bash
+cd /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace
+docker-compose -f docker-compose.kafka.yml up -d
 ```
 
 ## Database Schema
@@ -213,12 +237,23 @@ mvn clean package
 java -jar target/order-service-1.0.0-SNAPSHOT.jar
 ```
 
+### Using Docker Compose
+
+```bash
+cd /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/order-service
+docker-compose -f docker-compose-full.yml up -d --build
+```
+
 ## API Documentation
 
 Once the service is running, access:
 
 - **Swagger UI**: http://localhost:8086/swagger-ui.html
 - **OpenAPI Spec**: http://localhost:8086/api-docs
+
+## Testing
+
+Manual testing guide: `order-service/TESTING.md`
 
 ## Development
 

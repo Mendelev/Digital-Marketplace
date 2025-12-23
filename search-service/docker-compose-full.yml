@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  search-service:
+    build:
+      context: ..
+      dockerfile: search-service/Dockerfile
+    container_name: search-service
+    environment:
+      # Elasticsearch configuration (connects to host)
+      SPRING_ELASTICSEARCH_URIS: http://host.docker.internal:9200
+
+      # Kafka configuration (connects to host)
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: host.docker.internal:9092
+      SPRING_KAFKA_CONSUMER_GROUP_ID: search-service-group
+      SPRING_KAFKA_CONSUMER_AUTO_OFFSET_RESET: earliest
+      SPRING_KAFKA_CONSUMER_ENABLE_AUTO_COMMIT: "false"
+
+      # Search configuration
+      SEARCH_INDEX_NAME: products
+      SEARCH_KAFKA_TOPIC: product-events
+
+      # Logging
+      LOGGING_LEVEL_COM_MARKETPLACE_SEARCH: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_KAFKA: INFO
+      LOGGING_LEVEL_ORG_ELASTICSEARCH: INFO
+    ports:
+      - "8085:8085"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped

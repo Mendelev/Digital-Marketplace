@@ -14,6 +14,7 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
@@ -39,33 +40,50 @@ public class ProductEventPublisher {
     }
     
     public void publishProductCreated(Product product) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("productId", product.getId().toString());
+        payload.put("sellerId", product.getSellerId().toString());
+        payload.put("name", product.getName());
+        payload.put("description", product.getDescription());
+        payload.put("basePrice", product.getBasePrice().toString());
+        payload.put("categoryId", product.getCategory().getId());
+        payload.put("categoryName", product.getCategory().getName());
+        payload.put("status", product.getStatus().name());
+        payload.put("availableSizes", product.getAvailableSizes());
+        payload.put("availableColors", product.getAvailableColors());
+        payload.put("imageUrls", product.getImageUrls());
+        payload.put("featured", product.isFeatured());
+        payload.put("createdAt", product.getCreatedAt().toString());
+        payload.put("updatedAt", product.getUpdatedAt().toString());
+
         publishEvent(
             "ProductCreated",
             product.getId(),
-            Map.of(
-                "productId", product.getId().toString(),
-                "sellerId", product.getSellerId().toString(),
-                "name", product.getName(),
-                "basePrice", product.getBasePrice().toString(),
-                "categoryId", product.getCategory().getId(),
-                "categoryName", product.getCategory().getName(),
-                "status", product.getStatus().name(),
-                "createdAt", product.getCreatedAt().toString()
-            )
+            payload
         );
     }
     
     public void publishProductUpdated(Product product) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("productId", product.getId().toString());
+        payload.put("sellerId", product.getSellerId().toString());
+        payload.put("name", product.getName());
+        payload.put("description", product.getDescription());
+        payload.put("basePrice", product.getBasePrice().toString());
+        payload.put("categoryId", product.getCategory().getId());
+        payload.put("categoryName", product.getCategory().getName());
+        payload.put("status", product.getStatus().name());
+        payload.put("availableSizes", product.getAvailableSizes());
+        payload.put("availableColors", product.getAvailableColors());
+        payload.put("imageUrls", product.getImageUrls());
+        payload.put("featured", product.isFeatured());
+        payload.put("createdAt", product.getCreatedAt().toString());
+        payload.put("updatedAt", product.getUpdatedAt().toString());
+
         publishEvent(
             "ProductUpdated",
             product.getId(),
-            Map.of(
-                "productId", product.getId().toString(),
-                "name", product.getName(),
-                "basePrice", product.getBasePrice().toString(),
-                "status", product.getStatus().name(),
-                "updatedAt", product.getUpdatedAt().toString()
-            )
+            payload
         );
     }
     
@@ -108,11 +126,16 @@ public class ProductEventPublisher {
             .setHeader("sequence-number", sequenceNumber)
             .build();
         
-        boolean sent = streamBridge.send("product-events-out-0", message);
-        if (sent) {
-            log.info("Published {} event to Kafka for product: {}", eventType, productId);
-        } else {
-            log.error("Failed to publish {} event to Kafka for product: {}", eventType, productId);
+        try {
+            boolean sent = streamBridge.send("product-events-out-0", message);
+            if (sent) {
+                log.info("Published {} event to Kafka for product: {}", eventType, productId);
+            } else {
+                log.warn("Failed to publish {} event to Kafka for product: {}", eventType, productId);
+            }
+        } catch (Exception e) {
+            // Allow product operations to proceed even if Kafka is unavailable.
+            log.warn("Skipping Kafka publish for {} event (product: {}): {}", eventType, productId, e.getMessage());
         }
     }
 }

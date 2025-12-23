@@ -19,6 +19,8 @@ import com.marketplace.search.exception.SearchException;
 import com.marketplace.search.service.SearchCriteria;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.query.Query;
@@ -74,8 +76,8 @@ public class CustomProductSearchRepositoryImpl implements CustomProductSearchRep
             }
 
             // Build native query
-            org.springframework.data.elasticsearch.core.query.NativeQuery.NativeQueryBuilder queryBuilder =
-                    org.springframework.data.elasticsearch.core.query.NativeQuery.builder()
+            org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder queryBuilder =
+                    org.springframework.data.elasticsearch.client.elc.NativeQuery.builder()
                             .withQuery(q -> q.bool(boolQuery.build()));
 
             // Add sorting
@@ -230,7 +232,7 @@ public class CustomProductSearchRepositoryImpl implements CustomProductSearchRep
         }
     }
 
-    private void addSorting(org.springframework.data.elasticsearch.core.query.NativeQuery.NativeQueryBuilder queryBuilder,
+    private void addSorting(org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder queryBuilder,
                            SortOptions sortOptions) {
         SortOptions.SortField field = sortOptions.field();
         SortOptions.SortDirection direction = sortOptions.direction();
@@ -250,7 +252,7 @@ public class CustomProductSearchRepositoryImpl implements CustomProductSearchRep
         }
     }
 
-    private void addAggregations(org.springframework.data.elasticsearch.core.query.NativeQuery.NativeQueryBuilder queryBuilder) {
+    private void addAggregations(org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder queryBuilder) {
         // Categories aggregation
         queryBuilder.withAggregation("categories", Aggregation.of(a -> a
                 .terms(t -> t.field("categoryName.keyword").size(50))

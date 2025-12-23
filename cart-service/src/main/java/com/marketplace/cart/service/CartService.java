@@ -58,6 +58,17 @@ public class CartService {
     }
 
     /**
+     * Get cart by ID (internal use by other services).
+     */
+    @Transactional(readOnly = true)
+    public CartResponse getCartById(UUID cartId) {
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found: " + cartId));
+
+        return toCartResponse(cart);
+    }
+
+    /**
      * Add item to cart or increment quantity if already exists.
      */
     @Transactional

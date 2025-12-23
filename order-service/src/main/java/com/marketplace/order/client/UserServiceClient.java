@@ -5,6 +5,9 @@ import com.marketplace.order.exception.UserServiceException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -42,11 +45,16 @@ public class UserServiceClient {
         try {
             log.debug("Fetching address: {}", addressId);
 
-            String url = properties.baseUrl() + "/api/v1/addresses/" + addressId;
+            String url = properties.baseUrl() + "/api/v1/addresses/internal/" + addressId;
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Service-Secret", properties.sharedSecret());
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-            ResponseEntity<AddressResponse> response = restTemplate.getForEntity(
-                    url,
-                    AddressResponse.class
+            ResponseEntity<AddressResponse> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                AddressResponse.class
             );
 
             if (response.getBody() == null) {

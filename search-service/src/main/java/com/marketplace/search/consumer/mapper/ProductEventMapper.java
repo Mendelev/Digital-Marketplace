@@ -5,6 +5,8 @@ import com.marketplace.search.consumer.event.ProductUpdatedEvent;
 import com.marketplace.search.document.ProductDocument;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+
 /**
  * Maps Kafka product events to ProductDocument for indexing.
  */
@@ -27,8 +29,8 @@ public class ProductEventMapper {
         document.setAvailableColors(event.availableColors());
         document.setThumbnailUrl(getThumbnailUrl(event.imageUrls()));
         document.setFeatured(false); // Default to false
-        document.setCreatedAt(event.createdAt());
-        document.setUpdatedAt(event.updatedAt());
+        document.setCreatedAt(toInstant(event.createdAt()));
+        document.setUpdatedAt(toInstant(event.updatedAt()));
         return document;
     }
 
@@ -48,8 +50,8 @@ public class ProductEventMapper {
         document.setAvailableColors(event.availableColors());
         document.setThumbnailUrl(getThumbnailUrl(event.imageUrls()));
         document.setFeatured(false); // Default to false
-        document.setCreatedAt(event.createdAt());
-        document.setUpdatedAt(event.updatedAt());
+        document.setCreatedAt(toInstant(event.createdAt()));
+        document.setUpdatedAt(toInstant(event.updatedAt()));
         return document;
     }
 
@@ -61,5 +63,9 @@ public class ProductEventMapper {
             return imageUrls.get(0);
         }
         return null;
+    }
+
+    private Instant toInstant(java.time.OffsetDateTime value) {
+        return value != null ? value.toInstant() : null;
     }
 }

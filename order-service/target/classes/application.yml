@@ -37,6 +37,8 @@ spring:
         binder:
           brokers: ${KAFKA_BROKERS:localhost:9092}
           auto-create-topics: true
+          producer-properties:
+            key.serializer: org.apache.kafka.common.serialization.StringSerializer
       bindings:
         order-events-out-0:
           destination: order-events
@@ -58,13 +60,14 @@ cart-service:
 
 user-service:
   base-url: ${USER_SERVICE_URL:http://localhost:8081}
+  shared-secret: ${USER_SERVICE_SHARED_SECRET:dev-secret-change-in-production}
   connect-timeout-ms: 5000
   read-timeout-ms: 10000
 
 # Business Configuration
 order-service:
   flat-shipping-rate: 9.99
-  payment-success-rate: 90
+  payment-success-rate: 100
   reservation-ttl-minutes: 15
 
 # Resilience4j Circuit Breaker Configuration

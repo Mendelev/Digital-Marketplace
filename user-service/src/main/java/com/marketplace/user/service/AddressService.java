@@ -86,6 +86,20 @@ public class AddressService {
     }
 
     /**
+     * Get address by ID for internal service-to-service calls.
+     */
+    @Transactional(readOnly = true)
+    public AddressResponse getAddressInternal(UUID addressId) {
+        logger.debug("Fetching address internally: {}", addressId);
+
+        Address address = addressRepository.findById(addressId)
+                .filter(addr -> !Boolean.TRUE.equals(addr.getIsDeleted()))
+                .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
+
+        return toResponse(address);
+    }
+
+    /**
      * List all addresses for a user.
      */
     @Transactional(readOnly = true)

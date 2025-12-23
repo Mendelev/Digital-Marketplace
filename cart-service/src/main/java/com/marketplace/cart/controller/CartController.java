@@ -51,6 +51,22 @@ public class CartController {
     }
 
     /**
+     * Internal: Get cart by cart ID.
+     */
+    @GetMapping("/internal/{cartId}")
+    @Operation(summary = "Get cart by ID (internal)", description = "Retrieve cart by cart ID for internal services")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Cart retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Cart not found")
+    })
+    public ResponseEntity<CartResponse> getCartById(
+            @Parameter(description = "Cart ID", required = true)
+            @PathVariable UUID cartId) {
+        log.debug("Internal get cart request: {}", cartId);
+        return ResponseEntity.ok(cartService.getCartById(cartId));
+    }
+
+    /**
      * Add item to cart.
      */
     @PostMapping("/{userId}/items")
