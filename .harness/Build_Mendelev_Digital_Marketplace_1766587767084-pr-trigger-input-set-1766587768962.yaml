@@ -1,0 +1,14 @@
+inputSet:
+  name: Build_Mendelev_Digital_Marketplace_1766587767084-pr-trigger-input-set
+  identifier: Build_Mendelev_Digital_Marketplace_1766587767084prtriggerinputset
+  orgIdentifier: default
+  projectIdentifier: digitalmarketplace
+  pipeline:
+    identifier: Build_Mendelev_Digital_Marketplace_1766587767084
+    properties:
+      ci:
+        codebase:
+          build:
+            type: PR
+            spec:
+              number: <+trigger.prNumber>
