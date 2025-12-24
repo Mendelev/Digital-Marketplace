@@ -46,7 +46,7 @@ Since registration requires the User Service, manually insert a test user into t
 
 **Connect to PostgreSQL:**
 ```bash
-docker exec -it auth-service-postgres psql -U auth_user -d auth_db
+docker exec -it marketplace-postgres psql -U auth_user -d auth_db
 ```
 
 **Insert test credential:**
@@ -57,7 +57,7 @@ VALUES (
     gen_random_uuid(),
     'a1b2c3d4-e5f6-7890-abcd-ef1234567890'::uuid,
     'test@example.com',
-    '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYfQzz3U5YK',
+    '$2y$12$XkzpZeK3trqCMhui0sSi4eDoHv9WXXsLehsgkmFExB1OZoFH67Hsu',
     'ACTIVE',
     0,
     NOW(),
@@ -188,12 +188,12 @@ done
 
 **Verify in database:**
 ```bash
-docker exec -it auth-service-postgres psql -U auth_user -d auth_db -c "SELECT email, status, failed_login_count FROM credentials WHERE email = 'test@example.com';"
+docker exec -it marketplace-postgres psql -U auth_user -d auth_db -c "SELECT email, status, failed_login_count FROM credentials WHERE email = 'test@example.com';"
 ```
 
 **Reset the account for further testing:**
 ```bash
-docker exec -it auth-service-postgres psql -U auth_user -d auth_db -c "UPDATE credentials SET status = 'ACTIVE', failed_login_count = 0 WHERE email = 'test@example.com';"
+docker exec -it marketplace-postgres psql -U auth_user -d auth_db -c "UPDATE credentials SET status = 'ACTIVE', failed_login_count = 0 WHERE email = 'test@example.com';"
 ```
 
 ---
@@ -338,7 +338,7 @@ curl -X POST http://localhost:8080/api/v1/auth/forgot-password \
 
 **Or query the database:**
 ```bash
-docker exec -it auth-service-postgres psql -U auth_user -d auth_db -c "SELECT token_hash, email, expires_at, used_at FROM password_reset_tokens WHERE email = 'test@example.com' ORDER BY created_at DESC LIMIT 1;"
+docker exec -it marketplace-postgres psql -U auth_user -d auth_db -c "SELECT token_hash, email, expires_at, used_at FROM password_reset_tokens WHERE email = 'test@example.com' ORDER BY created_at DESC LIMIT 1;"
 ```
 
 **Note:** The token in the database is hashed. You need to extract the actual token from the application logs (look for "Reset token (would be sent via email): ...")
@@ -452,7 +452,7 @@ Delete old refresh tokens from the database.
 
 **First, create some old tokens in the database:**
 ```bash
-docker exec -it auth-service-postgres psql -U auth_user -d auth_db -c "INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at, created_at) VALUES (gen_random_uuid(), 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'::uuid, 'old_token_hash_1', NOW() - INTERVAL '35 days', NOW() - INTERVAL '35 days');"
+docker exec -it marketplace-postgres psql -U auth_user -d auth_db -c "INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at, created_at) VALUES (gen_random_uuid(), 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'::uuid, 'old_token_hash_1', NOW() - INTERVAL '35 days', NOW() - INTERVAL '35 days');"
 ```
 
 **Request:**
@@ -596,7 +596,7 @@ After testing, you can clean up test data:
 
 ```bash
 # Connect to database
-docker exec -it auth-service-postgres psql -U auth_user -d auth_db
+docker exec -it marketplace-postgres psql -U auth_user -d auth_db
 
 -- Delete test data
 DELETE FROM password_reset_tokens WHERE email = 'test@example.com';

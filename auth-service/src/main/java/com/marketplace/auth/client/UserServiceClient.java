@@ -29,6 +29,7 @@ public class UserServiceClient {
 
     private static final Logger log = LoggerFactory.getLogger(UserServiceClient.class);
     private static final String CREATE_USER_ENDPOINT = "/api/v1/users";
+    private static final String INTERNAL_USER_ENDPOINT = "/api/v1/users/internal";
     private static final String SERVICE_SECRET_HEADER = "X-Service-Secret";
     private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
 
@@ -147,6 +148,64 @@ public class UserServiceClient {
     }
 
     /**
+     * Get user by ID from the User Service.
+     * Used to fetch user roles during login.
+     *
+     * @param userId the user ID to fetch
+     * @return the user response with roles
+     * @throws UserServiceException if user fetch fails
+     */
+    @CircuitBreaker(name = "userService", fallbackMethod = "getUserByIdFallback")
+    public UserResponse getUserById(UUID userId) {
+        log.debug("Fetching user from User Service: userId={}", userId);
+        
+        try {
+            String url = properties.baseUrl() + INTERNAL_USER_ENDPOINT + "/" + userId;
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(SERVICE_SECRET_HEADER, properties.sharedSecret());
+            
+            // Propagate correlation ID for distributed tracing
+            String correlationId = MDC.get("correlationId");
+            if (correlationId != null) {
+                headers.set(CORRELATION_ID_HEADER, correlationId);
+            }
+            
+            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
+            
+            ResponseEntity<UserResponse> response = restTemplate.exchange(
+                    url,
+                    org.springframework.http.HttpMethod.GET,
+                    httpEntity,
+                    UserResponse.class
+            );
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                log.debug("User fetched successfully from User Service: userId={}, roles={}", 
+                        userId, response.getBody().roles());
+                return response.getBody();
+            } else {
+                log.error("Unexpected response from User Service: status={}", response.getStatusCode());
+                throw new UserServiceException("Unexpected response from User Service: " + response.getStatusCode());
+            }
+            
+        } catch (HttpClientErrorException e) {
+            log.error("Client error fetching user from User Service: status={}, userId={}", 
+                    e.getStatusCode(), userId);
+            throw new UserServiceException("User Service returned client error: " + e.getStatusCode(), e);
+            
+        } catch (HttpServerErrorException e) {
+            log.error("Server error fetching user from User Service: status={}, userId={}", 
+                    e.getStatusCode(), userId);
+            throw new UserServiceException("User Service returned server error: " + e.getStatusCode(), e);
+            
+        } catch (ResourceAccessException e) {
+            log.error("Failed to connect to User Service: userId={}", userId);
+            throw new UserServiceException("Failed to connect to User Service", e);
+        }
+    }
+
+    /**
      * Fallback method when User Service is unavailable.
      * This method is called when circuit breaker is open.
      */
@@ -165,5 +224,16 @@ public class UserServiceClient {
         log.error("Circuit breaker activated for User Service. Delete fallback triggered for user: {}", 
                 userId, e);
         throw new UserServiceException("User Service is currently unavailable for deletion.", e);
+    }
+
+    /**
+     * Fallback method for getUserById when User Service is unavailable.
+     * Returns null to allow login to proceed with default role.
+     */
+    @SuppressWarnings("unused")
+    private UserResponse getUserByIdFallback(UUID userId, Exception e) {
+        log.warn("Circuit breaker activated for User Service. GetUserById fallback triggered for user: {}. Using default role.", 
+                userId);
+        return null; // Returns null so login can proceed with default role
     }
 }

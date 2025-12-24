@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  payment-service:
+    build:
+      context: ..
+      dockerfile: payment-service/Dockerfile
+    container_name: payment-service
+    ports:
+      - "8087:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/payment_db
+      SPRING_DATASOURCE_USERNAME: payment_user
+      SPRING_DATASOURCE_PASSWORD: payment_pass
+      AUTH_SERVICE_URL: http://host.docker.internal:8080
+      AUTH_SERVICE_SHARED_SECRET: dev-secret-change-in-production
+      ORDER_SERVICE_URL: http://host.docker.internal:8086
+      ORDER_SERVICE_SHARED_SECRET: dev-secret-change-in-production
+      PAYMENT_SERVICE_SHARED_SECRET: dev-secret-change-in-production
+      PORT: 8083
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8083/api-docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

@@ -30,6 +30,9 @@
         <springdoc.version>2.3.0</springdoc.version>
         <resilience4j.version>2.2.0</resilience4j.version>
         <logstash.version>7.4</logstash.version>
+        <flyway.url>jdbc:postgresql://localhost:5432/auth_db</flyway.url>
+        <flyway.user>auth_user</flyway.user>
+        <flyway.password>auth_pass</flyway.password>
     </properties>
 
     <dependencies>
@@ -186,9 +189,9 @@
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-maven-plugin</artifactId>
                 <configuration>
-                    <url>jdbc:postgresql://localhost:5462/auth_db</url>
-                    <user>auth_user</user>
-                    <password>auth_pass</password>
+                    <url>${flyway.url}</url>
+                    <user>${flyway.user}</user>
+                    <password>${flyway.password}</password>
                 </configuration>
             </plugin>
         </plugins>

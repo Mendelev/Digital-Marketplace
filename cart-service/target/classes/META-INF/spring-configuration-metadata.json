@@ -1,0 +1,29 @@
+{
+  "groups": [
+    {
+      "name": "catalog-service",
+      "type": "com.marketplace.cart.config.CatalogServiceProperties",
+      "sourceType": "com.marketplace.cart.config.CatalogServiceProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "catalog-service.base-url",
+      "type": "java.lang.String",
+      "sourceType": "com.marketplace.cart.config.CatalogServiceProperties"
+    },
+    {
+      "name": "catalog-service.connect-timeout-ms",
+      "type": "java.lang.Integer",
+      "sourceType": "com.marketplace.cart.config.CatalogServiceProperties",
+      "defaultValue": 0
+    },
+    {
+      "name": "catalog-service.read-timeout-ms",
+      "type": "java.lang.Integer",
+      "sourceType": "com.marketplace.cart.config.CatalogServiceProperties",
+      "defaultValue": 0
+    }
+  ],
+  "hints": []
+}

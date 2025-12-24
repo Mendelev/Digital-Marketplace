@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  order-service:
+    build:
+      context: ..
+      dockerfile: order-service/Dockerfile
+    container_name: order-service
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/order_db
+      SPRING_DATASOURCE_USERNAME: order_user
+      SPRING_DATASOURCE_PASSWORD: order_pass
+      KAFKA_BROKERS: host.docker.internal:9092
+      CART_SERVICE_URL: http://host.docker.internal:8083
+      USER_SERVICE_URL: http://host.docker.internal:8081
+      USER_SERVICE_SHARED_SECRET: dev-secret-change-in-production
+      PORT: 8086
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8086/api-docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
