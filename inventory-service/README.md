@@ -113,6 +113,28 @@ The service starts on **http://localhost:8083**
 
 Open http://localhost:8083/swagger-ui.html to explore and test the APIs.
 
+## Docker
+
+### Start PostgreSQL (Local)
+
+```bash
+cd /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/inventory-service
+docker-compose up -d
+```
+
+### Build and Run Inventory Service
+
+```bash
+cd /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/inventory-service
+docker-compose -f docker-compose-full.yml up -d --build
+```
+
+The container maps port 8083 inside the container to port 8088 on the host to avoid conflicts.
+
+## Testing
+
+Manual test steps live in `inventory-service/TESTING.md`.
+
 ## Database Schema
 
 ### Tables

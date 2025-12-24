@@ -8,7 +8,7 @@ services:
     container_name: user-service
     environment:
       # Database configuration (connects to host)
-      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5463/user_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/user_db
       SPRING_DATASOURCE_USERNAME: user_user
       SPRING_DATASOURCE_PASSWORD: user_pass
       

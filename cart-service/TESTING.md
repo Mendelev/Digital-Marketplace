@@ -40,7 +40,7 @@ This guide covers manual testing steps for the Cart Service API. The Cart Servic
 ```bash
 export CART_BASE_URL="http://localhost:8083"
 export USER_ID="11111111-1111-1111-1111-111111111111"
-export PRODUCT_ID="9d8f0844-f06a-40da-90f9-bb68c5964f43"
+export PRODUCT_ID="20787d17-0db8-4bfc-9c3d-4f8068646ecd"
 ```
 
 ---

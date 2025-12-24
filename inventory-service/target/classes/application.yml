@@ -44,7 +44,7 @@ spring:
         size: 2
 
 server:
-  port: 8083
+  port: ${PORT:8083}
   error:
     include-message: always
     include-binding-errors: always

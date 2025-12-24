@@ -202,6 +202,28 @@ You should see:
 - `payment_transactions`
 - `flyway_schema_history`
 
+## Docker
+
+### Start PostgreSQL (Local)
+
+```bash
+cd /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/payment-service
+docker-compose up -d
+```
+
+### Build and Run Payment Service
+
+```bash
+cd /Users/yuri.camargo/DevPro/Practice_projects/Digital-Marketplace/payment-service
+docker-compose -f docker-compose-full.yml up -d --build
+```
+
+The container maps port 8083 inside the container to port 8087 on the host to avoid conflicts with cart-service.
+
+## Testing
+
+Manual test steps live in `payment-service/TESTING.md`.
+
 ## API Endpoints
 
 ### Base URL

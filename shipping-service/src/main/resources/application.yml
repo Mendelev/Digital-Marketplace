@@ -1,0 +1,135 @@
+spring:
+  application:
+    name: shipping-service
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    date-format: yyyy-MM-dd'T'HH:mm:ss.SSSXXX
+    time-zone: UTC
+
+  datasource:
+    url: jdbc:postgresql://localhost:5434/shipping_db
+    username: shipping_user
+    password: ${DB_PASSWORD:shipping_pass}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+    show-sql: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: ${KAFKA_BROKERS:localhost:9092}
+          auto-create-topics: true
+      bindings:
+        orderEvents-in-0:
+          destination: order-events
+          group: shipping-service
+          content-type: application/json
+        shippingEvents-out-0:
+          destination: shipping-events
+          content-type: application/json
+          producer:
+            partition-key-expression: headers['shipmentId']
+
+server:
+  port: ${PORT:8088}
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    defaults:
+      enabled: true
+
+# JWT Configuration
+jwt:
+  public-key-endpoint: ${AUTH_SERVICE_URL:http://localhost:8080}/api/v1/auth/public-key
+  public-key-cache-ttl-minutes: 60
+
+# Auth Service
+auth-service:
+  base-url: ${AUTH_SERVICE_URL:http://localhost:8080}
+  shared-secret: ${AUTH_SERVICE_SHARED_SECRET:dev-secret-change-in-production}
+
+# Order Service
+order-service:
+  base-url: ${ORDER_SERVICE_URL:http://localhost:8086}
+  shared-secret: ${ORDER_SERVICE_SHARED_SECRET:dev-secret-change-in-production}
+  connect-timeout-ms: 5000
+  read-timeout-ms: 10000
+
+# Service-to-service authentication
+service:
+  shared-secret: ${SHIPPING_SERVICE_SHARED_SECRET:dev-secret-change-in-production}
+
+# Shipment Simulation
+shipment-simulation:
+  auto-progress-enabled: true
+  created-to-in-transit-delay-seconds: 120
+  in-transit-to-out-for-delivery-delay-seconds: 180
+  out-for-delivery-to-delivered-delay-seconds: 60
+  delivery-success-rate: 0.98
+
+# Business Configuration
+shipping:
+  flat-rate-fee: 9.99
+  default-currency: USD
+  estimated-delivery-days: 5
+
+# Circuit Breaker
+resilience4j:
+  circuitbreaker:
+    instances:
+      orderService:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+      authService:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+
+# OpenAPI
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# Logging
+logging:
+  level:
+    com.marketplace.shipping: DEBUG
+    org.springframework.web: INFO
+    org.springframework.kafka: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"

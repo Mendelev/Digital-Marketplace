@@ -28,6 +28,9 @@
         <resilience4j.version>2.2.0</resilience4j.version>
         <springdoc.version>2.3.0</springdoc.version>
         <flyway.version>10.4.1</flyway.version>
+        <flyway.url>jdbc:postgresql://localhost:5432/user_db</flyway.url>
+        <flyway.user>user_user</flyway.user>
+        <flyway.password>user_pass</flyway.password>
     </properties>
 
     <dependencies>
@@ -135,9 +138,9 @@
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>${flyway.version}</version>
                 <configuration>
-                    <url>jdbc:postgresql://localhost:5463/user_db</url>
-                    <user>user_user</user>
-                    <password>user_pass</password>
+                    <url>${flyway.url}</url>
+                    <user>${flyway.user}</user>
+                    <password>${flyway.password}</password>
                 </configuration>
             </plugin>
         </plugins>

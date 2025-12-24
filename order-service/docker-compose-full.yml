@@ -9,7 +9,7 @@ services:
     ports:
       - "8086:8086"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5466/order_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/order_db
       SPRING_DATASOURCE_USERNAME: order_user
       SPRING_DATASOURCE_PASSWORD: order_pass
       KAFKA_BROKERS: host.docker.internal:9092

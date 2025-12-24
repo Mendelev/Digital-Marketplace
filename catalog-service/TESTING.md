@@ -138,6 +138,16 @@ curl -X POST http://localhost:8082/api/v1/categories \
   }
   ```
 
+```bash
+curl -X POST http://localhost:8082/api/v1/categories \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "name": "Games",
+    "description": "Gaming devices"
+  }'
+```
+
 ---
 
 ### Test 2: Create Subcategory
@@ -363,7 +373,7 @@ curl -X POST http://localhost:8082/api/v1/products \
     "name": "Samsung Galaxy S24",
     "description": "Latest Samsung flagship",
     "basePrice": 899.99,
-    "categoryId": 2,
+    "categoryId": 3,
     "sellerId": "22222222-2222-2222-2222-222222222222",
     "availableSizes": ["128GB", "256GB"],
     "availableColors": ["Black", "White"],
@@ -371,7 +381,7 @@ curl -X POST http://localhost:8082/api/v1/products \
       "128GB-Black": 15,
       "256GB-White": 10
     },
-    "imageUrls": ["https://via.placeholder.com/400x400"],
+    "imageUrls": ["https://images.pexels.com/photos/15493878/pexels-photo-15493878.jpeg"],
     "status": "ACTIVE"
   }'
 ```

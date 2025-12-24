@@ -29,6 +29,9 @@
         <springdoc.version>2.3.0</springdoc.version>
         <resilience4j.version>2.2.0</resilience4j.version>
         <logstash.version>7.4</logstash.version>
+        <flyway.url>jdbc:postgresql://localhost:5432/cart_db</flyway.url>
+        <flyway.user>cart_user</flyway.user>
+        <flyway.password>cart_pass</flyway.password>
     </properties>
 
     <dependencies>
@@ -166,9 +169,9 @@
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-maven-plugin</artifactId>
                 <configuration>
-                    <url>jdbc:postgresql://localhost:5465/cart_db</url>
-                    <user>cart_user</user>
-                    <password>cart_pass</password>
+                    <url>${flyway.url}</url>
+                    <user>${flyway.user}</user>
+                    <password>${flyway.password}</password>
                 </configuration>
             </plugin>
         </plugins>

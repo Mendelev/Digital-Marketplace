@@ -9,7 +9,7 @@ services:
     ports:
       - "8083:8083"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5465/cart_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/cart_db
       SPRING_DATASOURCE_USERNAME: cart_user
       SPRING_DATASOURCE_PASSWORD: cart_pass
       CATALOG_SERVICE_BASE_URL: http://host.docker.internal:8082
