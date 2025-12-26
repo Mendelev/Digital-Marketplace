@@ -54,110 +54,16 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: Run
                   name: Generate_Maven_Settings
                   identifier: Generate_Maven_Settings
-                  spec:
-                    image: maven:3.9-eclipse-temurin-21
-                    shell: Sh
-                    command: |
-                      mkdir -p ~/.m2
-
-                      # Generate settings.xml with JFrog credentials and deployment repository
-                      cat > ~/.m2/settings.xml << 'EOF'
-                      <?xml version="1.0" encoding="UTF-8"?>
-                      <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
-                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                                xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
-                        
-                        <!-- Authentication for JFrog Artifactory -->
-                        <servers>
-                          <server>
-                            <id>snapshots</id>
-                            <username><+secrets.getValue("jfrog_username")></username>
-                            <password><+secrets.getValue("jfrog_token")></password>
-                          </server>
-                        </servers>
-                        
-                        <!-- Active profile for deployment configuration -->
-                        <profiles>
-                          <profile>
-                            <id>artifactory-deploy</id>
-                            <activation>
-                              <activeByDefault>true</activeByDefault>
-                            </activation>
-                            <properties>
-                              <altDeploymentRepository>snapshots::default::<+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName></altDeploymentRepository>
-                            </properties>
-                          </profile>
-                        </profiles>
-                      </settings>
-                      EOF
-
-                      echo "Maven settings.xml generated successfully"
-                      echo "=========================================="
-                      echo "Service: auth-service"
-                      echo "Target repository: <+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName>"
-                      echo "Version: <+pipeline.variables.dynamicVersion>"
-                      echo "=========================================="
+                  template:
+                    templateRef: org.Generate_Maven_Settings
+                    versionLabel: version1
+                    gitBranch: main
               - step:
-                  type: Run
                   name: Deploy_to_Artifactory
                   identifier: Deploy_to_Artifactory
-                  spec:
-                    image: maven:3.9-eclipse-temurin-21
-                    shell: Sh
-                    command: |
-                      # Regenerate Maven settings.xml with JFrog credentials
-                      mkdir -p ~/.m2
-                      cat > ~/.m2/settings.xml << 'EOF'
-                      <?xml version="1.0" encoding="UTF-8"?>
-                      <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
-                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                                xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
-                        <servers>
-                          <server>
-                            <id>snapshots</id>
-                            <username><+secrets.getValue("jfrog_username")></username>
-                            <password><+secrets.getValue("jfrog_token")></password>
-                          </server>
-                        </servers>
-                        <profiles>
-                          <profile>
-                            <id>artifactory-deploy</id>
-                            <activation>
-                              <activeByDefault>true</activeByDefault>
-                            </activation>
-                            <properties>
-                              <altDeploymentRepository>snapshots::default::<+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName></altDeploymentRepository>
-                            </properties>
-                          </profile>
-                        </profiles>
-                      </settings>
-                      EOF
-
-                      echo "Maven settings.xml configured"
-                      echo "=========================================="
-                      echo "Deploying auth-service"
-                      echo "Service: <+pipeline.variables.serviceName>"
-                      echo "Artifact ID: <+pipeline.variables.artifactId>"
-                      echo "Version: <+pipeline.variables.dynamicVersion>"
-                      echo "Repository: <+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName>"
-                      echo "=========================================="
-
-                      # Deploy artifact to JFrog Artifactory
-                      cd <+pipeline.variables.serviceName> && \
-                        mvn -B deploy \
-                          -Drevision=<+pipeline.variables.dynamicVersion> \
-                          -DaltDeploymentRepository=snapshots::default::<+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName> \
-                          -DskipTests
-
-                      echo ""
-                      echo "=========================================="
-                      echo "✅ Deployment completed successfully!"
-                      echo "=========================================="
-                      echo "Artifact: com.marketplace:auth-service:<+pipeline.variables.dynamicVersion>"
-                      echo "Repository: <+pipeline.variables.jfrogRepoName>"
-                      echo ""
-                      echo "Verify in JFrog Artifactory:"
-                      echo "<+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName>/com/marketplace/auth-service/<+pipeline.variables.dynamicVersion>/"
+                  template:
+                    templateRef: org.Deploy_to_Artifactory
+                    versionLabel: version1
+                    gitBranch: main
