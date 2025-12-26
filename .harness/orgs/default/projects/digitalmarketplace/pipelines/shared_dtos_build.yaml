@@ -73,8 +73,8 @@ pipeline:
                         <servers>
                           <server>
                             <id>releases</id>
-                            <username><+secrets.getValue("jfrog_username")></username>
-                            <password><+secrets.getValue("jfrog_token")></password>
+                            <username><+secrets.getValue("account.jfrog_username")></username>
+                            <password><+secrets.getValue("account.jfrog_token")></password>
                           </server>
                         </servers>
                         <profiles>
@@ -133,8 +133,8 @@ pipeline:
                         <servers>
                           <server>
                             <id>releases</id>
-                            <username><+secrets.getValue("jfrog_username")></username>
-                            <password><+secrets.getValue("jfrog_token")></password>
+                            <username><+secrets.getValue("account.jfrog_username")></username>
+                            <password><+secrets.getValue("account.jfrog_token")></password>
                           </server>
                         </servers>
                         <profiles>
