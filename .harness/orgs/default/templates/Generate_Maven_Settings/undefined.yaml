@@ -25,6 +25,11 @@ template:
               <username><+secrets.getValue("jfrog_username")></username>
               <password><+secrets.getValue("jfrog_token")></password>
             </server>
+            <server>
+              <id>jfrog-releases</id>
+              <username><+secrets.getValue("jfrog_username")></username>
+              <password><+secrets.getValue("jfrog_token")></password>
+            </server>
           </servers>
           
           <!-- Active profile for deployment configuration -->
@@ -37,6 +42,18 @@ template:
               <properties>
                 <altDeploymentRepository>snapshots::default::<+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName></altDeploymentRepository>
               </properties>
+              <repositories>
+                <repository>
+                  <id>jfrog-releases</id>
+                  <url><+pipeline.variables.jfrogBaseUrl>/libs-release-local</url>
+                  <releases>
+                    <enabled>true</enabled>
+                  </releases>
+                  <snapshots>
+                    <enabled>false</enabled>
+                  </snapshots>
+                </repository>
+              </repositories>
             </profile>
           </profiles>
         </settings>
