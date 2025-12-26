@@ -6,6 +6,28 @@ template:
   orgIdentifier: default
   tags: {}
   spec:
+    variables:
+      - name: serviceName
+        type: String
+        description: "Service directory name (e.g., auth-service, user-service)"
+        value: <+input>
+      - name: artifactId
+        type: String
+        description: "Maven artifactId from pom.xml"
+        value: <+input>
+      - name: jfrogBaseUrl
+        type: String
+        description: "JFrog Artifactory base URL (without repo name)"
+        value: <+input>.default("https://trialq6tyqg.jfrog.io/artifactory")
+      - name: jfrogRepoName
+        type: String
+        description: "JFrog repository name for snapshots"
+        value: <+input>.default("libs-snapshot-local")
+      - name: dynamicVersion
+        type: String
+        description: "Dynamic version with build number"
+        required: false
+        value: ""
     properties:
       ci:
         codebase:
