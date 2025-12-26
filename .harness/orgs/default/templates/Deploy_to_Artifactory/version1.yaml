@@ -56,7 +56,7 @@ template:
 
         echo "Maven settings.xml configured"
         echo "=========================================="
-        echo "Deploying auth-service"
+        echo "Deploying <+pipeline.variables.serviceName>"
         echo "Service: <+pipeline.variables.serviceName>"
         echo "Artifact ID: <+pipeline.variables.artifactId>"
         echo "Version: 1.0.0-<+pipeline.sequenceId>"

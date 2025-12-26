@@ -4,6 +4,33 @@ pipeline:
   projectIdentifier: digitalmarketplace
   orgIdentifier: default
   tags: {}
+  variables:
+    - name: serviceName
+      type: String
+      description: "Service directory name"
+      required: true
+      value: user-service
+    - name: artifactId
+      type: String
+      description: "Maven artifactId from pom.xml"
+      required: true
+      value: user-service
+    - name: jfrogBaseUrl
+      type: String
+      description: "JFrog Artifactory base URL (without repo name)"
+      required: true
+      value: https://trialq6tyqg.jfrog.io/artifactory
+    - name: jfrogRepoName
+      type: String
+      description: "JFrog repository name for snapshots"
+      required: true
+      value: libs-snapshot-local
+    - name: dynamicVersion
+      type: String
+      description: "Dynamic version with build number"
+      required: false
+      value: ""
+      default: ""
   properties:
     ci:
       codebase:

@@ -61,9 +61,9 @@ template:
 
         echo "Maven settings.xml generated successfully"
         echo "=========================================="
-        echo "Service: auth-service"
+        echo "Service: <+pipeline.variables.serviceName>"
         echo "Target repository: <+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName>"
         echo "Version: 1.0.0-<+pipeline.sequenceId>"
-        echo "=========================================="
+        echo "========================================="
   identifier: Generate_Maven_Settings
   versionLabel: version1
