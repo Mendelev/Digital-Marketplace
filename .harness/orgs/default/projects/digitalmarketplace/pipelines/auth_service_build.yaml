@@ -28,8 +28,9 @@ pipeline:
     - name: dynamicVersion
       type: String
       description: "Dynamic version with build number"
-      required: true
-      value: 1.0.0-<+pipeline.sequenceId>
+      required: false
+      value: ""
+      default: ""
   properties:
     ci:
       codebase:
