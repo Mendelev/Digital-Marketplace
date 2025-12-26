@@ -1,0 +1,28 @@
+pipeline:
+  name: catalog_service_build
+  identifier: catalog_service_build
+  tags: {}
+  template:
+    templateRef: org.Deploy_Services
+    versionLabel: version1
+    gitBranch: main
+    templateInputs:
+      variables:
+        - name: serviceName
+          type: String
+          value: <+input>
+        - name: artifactId
+          type: String
+          value: <+input>
+        - name: jfrogBaseUrl
+          type: String
+          value: <+input>.default("https://trialq6tyqg.jfrog.io/artifactory")
+        - name: jfrogRepoName
+          type: String
+          value: <+input>.default("libs-snapshot-local")
+      properties:
+        ci:
+          codebase:
+            build: <+input>
+  projectIdentifier: digitalmarketplace
+  orgIdentifier: default
