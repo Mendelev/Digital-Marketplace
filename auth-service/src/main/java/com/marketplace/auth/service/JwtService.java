@@ -84,6 +84,7 @@ public class JwtService {
 
         return Jwts.builder()
                 .subject(userId.toString())
+                .id(UUID.randomUUID().toString())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiration))
                 .signWith(privateKey, Jwts.SIG.RS256)

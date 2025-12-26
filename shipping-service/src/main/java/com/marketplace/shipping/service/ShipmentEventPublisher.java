@@ -165,11 +165,15 @@ public class ShipmentEventPublisher {
                 .setHeader("correlationId", MDC.get("correlationId"))
                 .build();
 
-        boolean sent = streamBridge.send("shippingEvents-out-0", message);
-        if (sent) {
-            log.info("Published {} event to Kafka for shipment: {}", eventType, shipmentId);
-        } else {
-            log.error("Failed to publish {} event to Kafka for shipment: {}", eventType, shipmentId);
+        try {
+            boolean sent = streamBridge.send("shippingEvents-out-0", message);
+            if (sent) {
+                log.info("Published {} event to Kafka for shipment: {}", eventType, shipmentId);
+            } else {
+                log.error("Failed to publish {} event to Kafka for shipment: {}", eventType, shipmentId);
+            }
+        } catch (Exception e) {
+            log.warn("Skipping Kafka publish for {} event (shipment: {}): {}", eventType, shipmentId, e.getMessage());
         }
     }
 }

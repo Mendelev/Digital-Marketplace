@@ -1,0 +1,97 @@
+pipeline:
+  name: maven_artifactory_cloud
+  identifier: maven_artifactory_cloud
+  projectIdentifier: javatodoapp
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: githubmendelev
+        build: <+input>
+  stages:
+    - stage:
+        name: Build_and_Deploy
+        identifier: Build_and_Deploy
+        description: Build Maven artifact and deploy to JFrog Artifactory
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Generate_Maven_Settings
+                  identifier: Generate_Maven_Settings
+                  spec:
+                    image: maven:3.9-eclipse-temurin-21
+                    shell: Sh
+                    command: |
+                      mkdir -p ~/.m2
+                      cat > ~/.m2/settings.xml << 'EOF'
+                      <?xml version="1.0" encoding="UTF-8"?>
+                      <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+                        <servers>
+                          <server>
+                            <id>snapshots</id>
+                            <username><+secrets.getValue("jfrog_username")></username>
+                            <password><+secrets.getValue("jfrog_token")></password>
+                          </server>
+                        </servers>
+                      </settings>
+                      EOF
+                      echo "Maven settings.xml generated successfully"
+              - step:
+                  type: Run
+                  name: Unit_Tests
+                  identifier: Unit_Tests
+                  spec:
+                    image: maven:3.9-eclipse-temurin-21
+                    shell: Sh
+                    command: cd backend && mvn -B test
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - "**/target/surefire-reports/*.xml"
+              - step:
+                  type: Run
+                  name: Deploy_to_Artifactory
+                  identifier: Deploy_to_Artifactory
+                  spec:
+                    image: maven:3.9-eclipse-temurin-21
+                    shell: Sh
+                    command: |
+                      # Generate Maven settings.xml with JFrog credentials
+                      mkdir -p ~/.m2
+                      cat > ~/.m2/settings.xml << 'EOF'
+                      <?xml version="1.0" encoding="UTF-8"?>
+                      <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+                        <servers>
+                          <server>
+                            <id>snapshots</id>
+                            <username><+secrets.getValue("jfrog_username")></username>
+                            <password><+secrets.getValue("jfrog_token")></password>
+                          </server>
+                        </servers>
+                      </settings>
+                      EOF
+                      echo "Maven settings.xml configured"
+                      
+                      # Debug: Verify settings.xml was created (hide sensitive data)
+                      echo "Settings.xml exists: $(test -f ~/.m2/settings.xml && echo 'YES' || echo 'NO')"
+                      echo "Username configured: $(grep -q '<username>' ~/.m2/settings.xml && echo 'YES' || echo 'NO')"
+                      echo "Password configured: $(grep -q '<password>' ~/.m2/settings.xml && echo 'YES' || echo 'NO')"
+                      
+                      # Deploy artifact to JFrog Artifactory
+                      cd backend && mvn -B deploy -DskipTests

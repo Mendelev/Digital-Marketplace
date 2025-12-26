@@ -1,0 +1,313 @@
+# =============================================================================
+# Digital Marketplace - Microservice CI/CD Pipeline Template
+# =============================================================================
+# 
+# PURPOSE: Template for building and deploying individual microservices to JFrog Artifactory
+# PATTERN: One pipeline per service (auth-service, cart-service, catalog-service, etc.)
+# 
+# =============================================================================
+# PREREQUISITES
+# =============================================================================
+# 
+# 1. SERVICE POM REQUIREMENTS:
+#    Your service's pom.xml MUST include dynamic versioning support:
+#    
+#    <project>
+#        <version>${revision}</version>
+#        <properties>
+#            <revision>1.0.0-SNAPSHOT</revision>  <!-- Default fallback version -->
+#        </properties>
+#    </project>
+# 
+# 2. SHARED-DTOS DEPENDENCY:
+#    If your service depends on common/shared-dtos, ensure it's deployed to Artifactory first
+#    See: shared-dtos-pipeline.yaml for the setup pipeline
+# 
+# 3. HARNESS SECRETS:
+#    Configure these secrets in your Harness project:
+#    - jfrog_username: JFrog Artifactory username
+#    - jfrog_token: JFrog Artifactory API token or password
+# 
+# 4. GITHUB CONNECTOR:
+#    Update 'connectorRef' with your GitHub connector ID
+# 
+# =============================================================================
+# PIPELINE VARIABLES
+# =============================================================================
+# 
+# Required variables to customize per service:
+# 
+# Variable              | Example Value            | Description
+# --------------------- | ------------------------ | ------------------------------------
+# serviceName           | auth-service             | Directory name of the service
+# artifactId            | auth-service             | Maven artifactId (usually same as serviceName)
+# jfrogBaseUrl          | https://jfrog.company.com/artifactory | Base URL of JFrog instance (cloud or on-premises)
+# jfrogRepoName         | libs-snapshot-local      | Repository name in JFrog for snapshots
+# dynamicVersion        | 1.0.0-<+pipeline.sequenceId> | Version pattern with build number
+# 
+# =============================================================================
+
+pipeline:
+  name: <SERVICE_NAME>_Build_Deploy  # REPLACE: e.g., "auth_service_Build_Deploy"
+  identifier: <service_name>_build_deploy  # REPLACE: e.g., "auth_service_build_deploy"
+  projectIdentifier: <YOUR_PROJECT_ID>  # REPLACE: Your Harness project ID
+  orgIdentifier: default
+  tags: {}
+  
+  # Pipeline-level variables - CUSTOMIZE these for each service
+  variables:
+    - name: serviceName
+      type: String
+      description: "Service directory name (e.g., auth-service, cart-service)"
+      required: true
+      value: <SERVICE_DIRECTORY>  # REPLACE: e.g., "auth-service"
+    
+    - name: artifactId
+      type: String
+      description: "Maven artifactId from pom.xml"
+      required: true
+      value: <ARTIFACT_ID>  # REPLACE: e.g., "auth-service"
+    
+    - name: jfrogBaseUrl
+      type: String
+      description: "JFrog Artifactory base URL (without repo name)"
+      required: true
+      value: <JFROG_BASE_URL>  # REPLACE: e.g., "https://yourcompany.jfrog.io/artifactory"
+    
+    - name: jfrogRepoName
+      type: String
+      description: "JFrog repository name for snapshots"
+      required: true
+      value: libs-snapshot-local  # CUSTOMIZE: Your snapshot repository name
+    
+    - name: dynamicVersion
+      type: String
+      description: "Dynamic version with build number"
+      required: true
+      value: 1.0.0-<+pipeline.sequenceId>
+  
+  properties:
+    ci:
+      codebase:
+        connectorRef: <YOUR_GITHUB_CONNECTOR>  # REPLACE: Your GitHub connector
+        build: <+input>
+  
+  stages:
+    - stage:
+        name: Build_and_Deploy
+        identifier: Build_and_Deploy
+        description: Build Maven artifact and deploy to JFrog Artifactory
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              # ============================================================
+              # STEP 1: Generate Maven Settings with JFrog Credentials
+              # ============================================================
+              - step:
+                  type: Run
+                  name: Generate_Maven_Settings
+                  identifier: Generate_Maven_Settings
+                  spec:
+                    image: maven:3.9-eclipse-temurin-21
+                    shell: Sh
+                    command: |
+                      mkdir -p ~/.m2
+                      
+                      # Generate settings.xml with JFrog credentials and deployment repository
+                      cat > ~/.m2/settings.xml << 'EOF'
+                      <?xml version="1.0" encoding="UTF-8"?>
+                      <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+                        
+                        <!-- Authentication for JFrog Artifactory -->
+                        <servers>
+                          <server>
+                            <id>snapshots</id>
+                            <username><+secrets.getValue("jfrog_username")></username>
+                            <password><+secrets.getValue("jfrog_token")></password>
+                          </server>
+                        </servers>
+                        
+                        <!-- Active profile for deployment configuration -->
+                        <profiles>
+                          <profile>
+                            <id>artifactory-deploy</id>
+                            <activation>
+                              <activeByDefault>true</activeByDefault>
+                            </activation>
+                            <properties>
+                              <altDeploymentRepository>snapshots::default::<+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName></altDeploymentRepository>
+                            </properties>
+                          </profile>
+                        </profiles>
+                      </settings>
+                      EOF
+                      
+                      echo "Maven settings.xml generated successfully"
+                      echo "Target repository: <+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName>"
+                      echo "Service: <+pipeline.variables.serviceName>"
+                      echo "Version: <+pipeline.variables.dynamicVersion>"
+              
+              # ============================================================
+              # STEP 2: Run Unit Tests
+              # ============================================================
+              - step:
+                  type: Run
+                  name: Unit_Tests
+                  identifier: Unit_Tests
+                  spec:
+                    image: maven:3.9-eclipse-temurin-21
+                    shell: Sh
+                    command: |
+                      echo "Running tests for <+pipeline.variables.serviceName>..."
+                      cd <+pipeline.variables.serviceName> && mvn -B test -Drevision=<+pipeline.variables.dynamicVersion>
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - "**/target/surefire-reports/*.xml"
+              
+              # ============================================================
+              # STEP 3: Deploy to JFrog Artifactory
+              # ============================================================
+              - step:
+                  type: Run
+                  name: Deploy_to_Artifactory
+                  identifier: Deploy_to_Artifactory
+                  spec:
+                    image: maven:3.9-eclipse-temurin-21
+                    shell: Sh
+                    command: |
+                      # Regenerate Maven settings.xml with JFrog credentials
+                      mkdir -p ~/.m2
+                      cat > ~/.m2/settings.xml << 'EOF'
+                      <?xml version="1.0" encoding="UTF-8"?>
+                      <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+                        <servers>
+                          <server>
+                            <id>snapshots</id>
+                            <username><+secrets.getValue("jfrog_username")></username>
+                            <password><+secrets.getValue("jfrog_token")></password>
+                          </server>
+                        </servers>
+                        <profiles>
+                          <profile>
+                            <id>artifactory-deploy</id>
+                            <activation>
+                              <activeByDefault>true</activeByDefault>
+                            </activation>
+                            <properties>
+                              <altDeploymentRepository>snapshots::default::<+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName></altDeploymentRepository>
+                            </properties>
+                          </profile>
+                        </profiles>
+                      </settings>
+                      EOF
+                      
+                      echo "Maven settings.xml configured"
+                      
+                      # Debug: Verify configuration
+                      echo "Service: <+pipeline.variables.serviceName>"
+                      echo "Artifact ID: <+pipeline.variables.artifactId>"
+                      echo "Version: <+pipeline.variables.dynamicVersion>"
+                      echo "Repository: <+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName>"
+                      
+                      # Deploy artifact to JFrog Artifactory
+                      cd <+pipeline.variables.serviceName> && \
+                        mvn -B deploy \
+                          -Drevision=<+pipeline.variables.dynamicVersion> \
+                          -DaltDeploymentRepository=snapshots::default::<+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName> \
+                          -DskipTests
+                      
+                      echo "Deployment completed successfully!"
+                      echo "Artifact: <+pipeline.variables.artifactId>:<+pipeline.variables.dynamicVersion>"
+
+# =============================================================================
+# USAGE EXAMPLES
+# =============================================================================
+# 
+# Example 1: Auth Service Pipeline
+# ---------------------------------
+# serviceName:      auth-service
+# artifactId:       auth-service
+# jfrogBaseUrl:     https://mycompany.jfrog.io/artifactory
+# jfrogRepoName:    libs-snapshot-local
+# dynamicVersion:   1.0.0-<+pipeline.sequenceId>
+# 
+# Example 2: Cart Service Pipeline
+# ---------------------------------
+# serviceName:      cart-service
+# artifactId:       cart-service
+# jfrogBaseUrl:     https://jfrog.internal.company.com/artifactory
+# jfrogRepoName:    maven-snapshots
+# dynamicVersion:   1.0.0-<+pipeline.sequenceId>
+# 
+# Example 3: Catalog Service Pipeline (On-Premises JFrog)
+# --------------------------------------------------------
+# serviceName:      catalog-service
+# artifactId:       catalog-service
+# jfrogBaseUrl:     https://artifactory.myorg.local/artifactory
+# jfrogRepoName:    digital-marketplace-snapshots
+# dynamicVersion:   1.0.0-<+pipeline.sequenceId>
+# 
+# =============================================================================
+# DEPLOYMENT CHECKLIST
+# =============================================================================
+# 
+# Before creating your pipeline in Harness:
+# 
+# [ ] 1. Update service pom.xml to use ${revision} property:
+#        - Change <version>1.0.0-SNAPSHOT</version> to <version>${revision}</version>
+#        - Add <properties><revision>1.0.0-SNAPSHOT</revision></properties>
+# 
+# [ ] 2. Deploy shared-dtos dependency (if required):
+#        - Run the shared-dtos pipeline first (see shared-dtos-pipeline.yaml)
+#        - Verify artifact is in JFrog Artifactory
+# 
+# [ ] 3. Configure Harness secrets:
+#        - jfrog_username: Your JFrog username/email
+#        - jfrog_token: Your JFrog API token
+# 
+# [ ] 4. Update GitHub connector reference:
+#        - Replace <YOUR_GITHUB_CONNECTOR> with your connector ID
+# 
+# [ ] 5. Customize pipeline variables:
+#        - Replace all <PLACEHOLDERS> with actual values
+#        - Update pipeline name and identifier
+# 
+# [ ] 6. Test the pipeline:
+#        - Run manually first to verify configuration
+#        - Check JFrog Artifactory for deployed artifact
+#        - Verify version format is correct (e.g., 1.0.0-42)
+# 
+# =============================================================================
+# TROUBLESHOOTING
+# =============================================================================
+# 
+# Issue: "Could not transfer artifact" error during deployment
+# Solution: Verify jfrog_username and jfrog_token secrets are correct
+#           Check jfrogBaseUrl and jfrogRepoName are accessible
+# 
+# Issue: "Property 'revision' not found" error
+# Solution: Ensure pom.xml has <version>${revision}</version> and default property
+# 
+# Issue: Tests fail with missing shared-dtos dependency
+# Solution: Deploy shared-dtos first using shared-dtos-pipeline.yaml
+#           Verify it's available in JFrog with correct version
+# 
+# Issue: Wrong artifact version in JFrog
+# Solution: Check dynamicVersion variable uses <+pipeline.sequenceId>
+#           Verify -Drevision parameter is passed to all mvn commands
+# 
+# =============================================================================

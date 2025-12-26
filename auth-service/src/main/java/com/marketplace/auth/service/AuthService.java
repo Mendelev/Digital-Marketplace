@@ -299,13 +299,13 @@ public class AuthService {
         MDC.put("operation", "refreshToken");
         log.info("Processing token refresh");
 
-        // Hash the incoming refresh token to look up in database
-        String tokenHash = passwordEncoder.encode(request.refreshToken());
-
-        // Find refresh token by comparing hashes
+        // Find refresh token by comparing hashes (prefer the most recent match)
         RefreshToken storedToken = refreshTokenRepository.findAll().stream()
                 .filter(rt -> passwordEncoder.matches(request.refreshToken(), rt.getTokenHash()))
-                .findFirst()
+                .max(java.util.Comparator.comparing(
+                        RefreshToken::getCreatedAt,
+                        java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())
+                ))
                 .orElseThrow(() -> {
                     log.warn("Refresh failed: token not found");
                     return new InvalidTokenException("Invalid refresh token");

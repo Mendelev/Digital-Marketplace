@@ -43,8 +43,7 @@ public class SearchServiceClient {
             
             log.info("Indexed product {} in search service", product.getId());
         } catch (Exception e) {
-            log.error("Failed to index product {} in search service: {}", product.getId(), e.getMessage());
-            throw e; // Re-throw to trigger circuit breaker
+            log.warn("Skipping search index for product {}: {}", product.getId(), e.getMessage());
         }
     }
     
@@ -62,8 +61,7 @@ public class SearchServiceClient {
             
             log.info("Updated product {} in search service", product.getId());
         } catch (Exception e) {
-            log.error("Failed to update product {} in search service: {}", product.getId(), e.getMessage());
-            throw e; // Re-throw to trigger circuit breaker
+            log.warn("Skipping search update for product {}: {}", product.getId(), e.getMessage());
         }
     }
     
@@ -79,8 +77,7 @@ public class SearchServiceClient {
             
             log.info("Deleted product {} from search service", productId);
         } catch (Exception e) {
-            log.error("Failed to delete product {} from search service: {}", productId, e.getMessage());
-            throw e; // Re-throw to trigger circuit breaker
+            log.warn("Skipping search delete for product {}: {}", productId, e.getMessage());
         }
     }
     

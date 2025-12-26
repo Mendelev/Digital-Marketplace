@@ -1,0 +1,301 @@
+# =============================================================================
+# Shared-DTOs Deployment Pipeline
+# =============================================================================
+# 
+# PURPOSE: Deploy common/shared-dtos module to JFrog Artifactory
+# FREQUENCY: One-time setup + whenever shared-dtos changes
+# DEPENDENCY: Must run BEFORE building services that depend on shared-dtos
+# 
+# =============================================================================
+# OVERVIEW
+# =============================================================================
+# 
+# The shared-dtos module contains shared Data Transfer Objects used by:
+# - auth-service
+# - catalog-service
+# - order-service
+# 
+# This module MUST be deployed to Artifactory before building dependent services.
+# 
+# =============================================================================
+# PREREQUISITES
+# =============================================================================
+# 
+# 1. POM REQUIREMENTS:
+#    common/shared-dtos/pom.xml MUST include:
+#    
+#    <project>
+#        <groupId>com.marketplace</groupId>
+#        <artifactId>shared-dtos</artifactId>
+#        <version>${revision}</version>
+#        <properties>
+#            <revision>1.0.0</revision>  <!-- Note: Use stable version, not SNAPSHOT -->
+#        </properties>
+#    </project>
+# 
+# 2. HARNESS SECRETS:
+#    Same as microservice pipelines:
+#    - jfrog_username: JFrog Artifactory username
+#    - jfrog_token: JFrog Artifactory API token
+# 
+# 3. GITHUB CONNECTOR:
+#    Update 'connectorRef' with your GitHub connector ID
+# 
+# =============================================================================
+
+pipeline:
+  name: shared_dtos_Build_Deploy
+  identifier: shared_dtos_build_deploy
+  projectIdentifier: <YOUR_PROJECT_ID>  # REPLACE: Your Harness project ID
+  orgIdentifier: default
+  tags: {}
+  
+  # Pipeline-level variables
+  variables:
+    - name: modulePath
+      type: String
+      description: "Path to shared-dtos module"
+      required: true
+      value: common/shared-dtos
+    
+    - name: artifactId
+      type: String
+      description: "Maven artifactId"
+      required: true
+      value: shared-dtos
+    
+    - name: jfrogBaseUrl
+      type: String
+      description: "JFrog Artifactory base URL"
+      required: true
+      value: <JFROG_BASE_URL>  # REPLACE: e.g., "https://yourcompany.jfrog.io/artifactory"
+    
+    - name: jfrogRepoName
+      type: String
+      description: "JFrog repository name (use releases repo for stable version)"
+      required: true
+      value: libs-release-local  # NOTE: Using releases, not snapshots
+    
+    - name: stableVersion
+      type: String
+      description: "Stable version for shared-dtos (no build number needed)"
+      required: true
+      value: 1.0.0
+  
+  properties:
+    ci:
+      codebase:
+        connectorRef: <YOUR_GITHUB_CONNECTOR>  # REPLACE: Your GitHub connector
+        build: <+input>
+  
+  stages:
+    - stage:
+        name: Build_and_Deploy_Shared_DTOs
+        identifier: Build_and_Deploy_Shared_DTOs
+        description: Build shared-dtos module and deploy to JFrog Artifactory
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              # ============================================================
+              # STEP 1: Generate Maven Settings
+              # ============================================================
+              - step:
+                  type: Run
+                  name: Generate_Maven_Settings
+                  identifier: Generate_Maven_Settings
+                  spec:
+                    image: maven:3.9-eclipse-temurin-21
+                    shell: Sh
+                    command: |
+                      mkdir -p ~/.m2
+                      
+                      # Generate settings.xml with JFrog credentials
+                      cat > ~/.m2/settings.xml << 'EOF'
+                      <?xml version="1.0" encoding="UTF-8"?>
+                      <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+                        <servers>
+                          <server>
+                            <id>releases</id>
+                            <username><+secrets.getValue("jfrog_username")></username>
+                            <password><+secrets.getValue("jfrog_token")></password>
+                          </server>
+                        </servers>
+                        <profiles>
+                          <profile>
+                            <id>artifactory-deploy</id>
+                            <activation>
+                              <activeByDefault>true</activeByDefault>
+                            </activation>
+                            <properties>
+                              <altDeploymentRepository>releases::default::<+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName></altDeploymentRepository>
+                            </properties>
+                          </profile>
+                        </profiles>
+                      </settings>
+                      EOF
+                      
+                      echo "Maven settings.xml generated successfully"
+                      echo "Target repository: <+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName>"
+                      echo "Module: <+pipeline.variables.modulePath>"
+                      echo "Version: <+pipeline.variables.stableVersion>"
+              
+              # ============================================================
+              # STEP 2: Build Shared-DTOs (No Tests - Just Compile)
+              # ============================================================
+              - step:
+                  type: Run
+                  name: Build_Module
+                  identifier: Build_Module
+                  spec:
+                    image: maven:3.9-eclipse-temurin-21
+                    shell: Sh
+                    command: |
+                      echo "Building shared-dtos module..."
+                      cd <+pipeline.variables.modulePath> && \
+                        mvn -B clean package \
+                          -Drevision=<+pipeline.variables.stableVersion> \
+                          -DskipTests
+                      
+                      echo "Build completed successfully"
+                      ls -lh target/*.jar
+              
+              # ============================================================
+              # STEP 3: Deploy to JFrog Artifactory
+              # ============================================================
+              - step:
+                  type: Run
+                  name: Deploy_to_Artifactory
+                  identifier: Deploy_to_Artifactory
+                  spec:
+                    image: maven:3.9-eclipse-temurin-21
+                    shell: Sh
+                    command: |
+                      # Regenerate Maven settings.xml
+                      mkdir -p ~/.m2
+                      cat > ~/.m2/settings.xml << 'EOF'
+                      <?xml version="1.0" encoding="UTF-8"?>
+                      <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+                        <servers>
+                          <server>
+                            <id>releases</id>
+                            <username><+secrets.getValue("jfrog_username")></username>
+                            <password><+secrets.getValue("jfrog_token")></password>
+                          </server>
+                        </servers>
+                        <profiles>
+                          <profile>
+                            <id>artifactory-deploy</id>
+                            <activation>
+                              <activeByDefault>true</activeByDefault>
+                            </activation>
+                            <properties>
+                              <altDeploymentRepository>releases::default::<+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName></altDeploymentRepository>
+                            </properties>
+                          </profile>
+                        </profiles>
+                      </settings>
+                      EOF
+                      
+                      echo "Maven settings.xml configured"
+                      
+                      # Debug information
+                      echo "Module: <+pipeline.variables.modulePath>"
+                      echo "Artifact ID: <+pipeline.variables.artifactId>"
+                      echo "Version: <+pipeline.variables.stableVersion>"
+                      echo "Repository: <+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName>"
+                      
+                      # Deploy to JFrog Artifactory
+                      cd <+pipeline.variables.modulePath> && \
+                        mvn -B deploy \
+                          -Drevision=<+pipeline.variables.stableVersion> \
+                          -DaltDeploymentRepository=releases::default::<+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName> \
+                          -DskipTests
+                      
+                      echo "====================================="
+                      echo "Deployment completed successfully!"
+                      echo "====================================="
+                      echo "Artifact: com.marketplace:<+pipeline.variables.artifactId>:<+pipeline.variables.stableVersion>"
+                      echo "Repository: <+pipeline.variables.jfrogRepoName>"
+                      echo ""
+                      echo "Services can now depend on this artifact by adding to their pom.xml:"
+                      echo "<dependency>"
+                      echo "    <groupId>com.marketplace</groupId>"
+                      echo "    <artifactId><+pipeline.variables.artifactId></artifactId>"
+                      echo "    <version><+pipeline.variables.stableVersion></version>"
+                      echo "</dependency>"
+
+# =============================================================================
+# USAGE NOTES
+# =============================================================================
+# 
+# 1. WHEN TO RUN THIS PIPELINE:
+#    - First time setup (before building any dependent services)
+#    - After making changes to shared-dtos code
+#    - When updating shared-dtos version
+# 
+# 2. VERSION STRATEGY:
+#    - Use STABLE versions (1.0.0, 1.1.0, 2.0.0)
+#    - Avoid SNAPSHOT for shared dependencies
+#    - Update version when making breaking changes
+# 
+# 3. AFTER DEPLOYMENT:
+#    Verify artifact in JFrog Artifactory:
+#    - Navigate to: libs-release-local/com/marketplace/shared-dtos/1.0.0/
+#    - Confirm files:
+#      - shared-dtos-1.0.0.jar
+#      - shared-dtos-1.0.0.pom
+#      - shared-dtos-1.0.0.jar.sha1
+#      - shared-dtos-1.0.0.pom.sha1
+# 
+# 4. DEPENDENT SERVICES:
+#    After deploying shared-dtos, you can build:
+#    - auth-service (depends on shared-dtos)
+#    - catalog-service (depends on shared-dtos)
+#    - order-service (depends on shared-dtos)
+# 
+# =============================================================================
+# CONFIGURATION EXAMPLE
+# =============================================================================
+# 
+# For JFrog Cloud:
+# ----------------
+# jfrogBaseUrl:  https://mycompany.jfrog.io/artifactory
+# jfrogRepoName: libs-release-local
+# stableVersion: 1.0.0
+# 
+# For On-Premises JFrog:
+# ----------------------
+# jfrogBaseUrl:  https://artifactory.company.com/artifactory
+# jfrogRepoName: libs-release-local
+# stableVersion: 1.0.0
+# 
+# =============================================================================
+# TROUBLESHOOTING
+# =============================================================================
+# 
+# Issue: "Could not find artifact com.marketplace:shared-dtos:1.0.0"
+# Solution: 
+#   1. Verify this pipeline ran successfully
+#   2. Check JFrog Artifactory for the artifact
+#   3. Ensure version in service pom.xml matches deployed version
+#   4. Verify Maven can access JFrog repository
+# 
+# Issue: Services fail with dependency resolution error
+# Solution:
+#   1. Check service pom.xml has correct shared-dtos version
+#   2. Verify JFrog credentials are configured in service pipeline
+#   3. Ensure settings.xml in service pipeline has repository configuration
+# 
+# =============================================================================
