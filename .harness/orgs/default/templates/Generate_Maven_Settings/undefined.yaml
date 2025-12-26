@@ -53,6 +53,16 @@ template:
                     <enabled>false</enabled>
                   </snapshots>
                 </repository>
+                <repository>
+                  <id>jfrog-snapshots</id>
+                  <url><+pipeline.variables.jfrogBaseUrl>/libs-snapshot-local</url>
+                  <releases>
+                    <enabled>false</enabled>
+                  </releases>
+                  <snapshots>
+                    <enabled>true</enabled>
+                  </snapshots>
+                </repository>
               </repositories>
             </profile>
           </profiles>
