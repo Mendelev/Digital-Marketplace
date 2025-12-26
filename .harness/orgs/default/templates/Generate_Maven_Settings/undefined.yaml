@@ -46,7 +46,7 @@ template:
         echo "=========================================="
         echo "Service: auth-service"
         echo "Target repository: <+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName>"
-        echo "Version: <+pipeline.variables.dynamicVersion>"
+        echo "Version: 1.0.0-<+pipeline.sequenceId>"
         echo "=========================================="
   identifier: Generate_Maven_Settings
   versionLabel: version1
