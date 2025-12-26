@@ -1,0 +1,45 @@
+pipeline:
+  name: auth_service_build
+  identifier: auth_service_build
+  projectIdentifier: digitalmarketplace
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: account.Github_OAuth_1766587643054
+        repoName: Digital-Marketplace
+        build: <+input>
+  stages:
+    - stage:
+        name: Build
+        identifier: Build
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+            override: true
+          buildIntelligence:
+            enabled: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Docker
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  name: Generate_Maven_Settings
+                  identifier: Generate_Maven_Settings
+                  template:
+                    templateRef: org.Generate_Maven_Settings
+                    versionLabel: version1
+              - step:
+                  name: Deploy_to_Artifactory
+                  identifier: Deploy_to_Artifactory
+                  template:
+                    templateRef: org.Deploy_to_Artifactory
+                    versionLabel: version1
