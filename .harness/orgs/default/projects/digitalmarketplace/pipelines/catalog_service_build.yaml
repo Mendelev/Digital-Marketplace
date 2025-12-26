@@ -2,24 +2,33 @@ pipeline:
   name: catalog_service_build
   identifier: catalog_service_build
   tags: {}
+  variables:
+    - name: serviceName
+      type: String
+      description: "Service directory name"
+      value: catalog-service
+    - name: artifactId
+      type: String
+      description: "Maven artifactId from pom.xml"
+      value: catalog-service
+    - name: jfrogBaseUrl
+      type: String
+      description: "JFrog Artifactory base URL"
+      value: https://trialq6tyqg.jfrog.io/artifactory
+    - name: jfrogRepoName
+      type: String
+      description: "JFrog repository name"
+      value: libs-snapshot-local
+    - name: dynamicVersion
+      type: String
+      description: "Dynamic version"
+      required: false
+      value: ""
   template:
     templateRef: org.Deploy_Services
     versionLabel: version1
     gitBranch: main
     templateInputs:
-      variables:
-        - name: serviceName
-          type: String
-          value: catalog-service
-        - name: artifactId
-          type: String
-          value: catalog-service
-        - name: jfrogBaseUrl
-          type: String
-          value: https://trialq6tyqg.jfrog.io/artifactory
-        - name: jfrogRepoName
-          type: String
-          value: libs-snapshot-local
       properties:
         ci:
           codebase:

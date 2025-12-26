@@ -9,23 +9,27 @@ template:
     variables:
       - name: serviceName
         type: String
-        description: "Service directory name (e.g., auth-service, user-service)"
-        value: <+input>
+        description: "Service directory name (REQUIRED)"
+        required: true
+        value: <+input>.allowedValues(auth-service,user-service,catalog-service,cart-service,order-service,payment-service,inventory-service,shipping-service,search-service)
       - name: artifactId
         type: String
-        description: "Maven artifactId from pom.xml"
-        value: <+input>
+        description: "Maven artifactId (usually same as serviceName)"
+        required: true
+        value: <+input>.executionInput()
       - name: jfrogBaseUrl
         type: String
-        description: "JFrog Artifactory base URL (without repo name)"
-        value: <+input>.default("https://trialq6tyqg.jfrog.io/artifactory")
+        description: "JFrog Artifactory base URL"
+        required: true
+        value: <+input>.default("https://trialq6tyqg.jfrog.io/artifactory").executionInput()
       - name: jfrogRepoName
         type: String
-        description: "JFrog repository name for snapshots"
-        value: <+input>.default("libs-snapshot-local")
+        description: "JFrog repository name"
+        required: true
+        value: <+input>.default("libs-snapshot-local").executionInput()
       - name: dynamicVersion
         type: String
-        description: "Dynamic version with build number"
+        description: "Dynamic version (auto-generated)"
         required: false
         value: ""
     properties:
