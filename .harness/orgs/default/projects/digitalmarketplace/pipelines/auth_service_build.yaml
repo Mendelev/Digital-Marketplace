@@ -8,8 +8,9 @@ pipeline:
     ci:
       codebase:
         connectorRef: account.Github_OAuth_1766587643054
-        repoName: Digital-Marketplace
+        repoName: Mendelev/Digital-Marketplace
         build: <+input>
+        sparseCheckout: []
   stages:
     - stage:
         name: Build
