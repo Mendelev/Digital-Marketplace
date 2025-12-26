@@ -1,7 +1,7 @@
 pipeline:
   name: auth_service_Build_Deploy
   identifier: auth_service_build_deploy
-  projectIdentifier: digital-marketplace
+  projectIdentifier: digitalmarketplace
   orgIdentifier: default
   tags:
     service: auth-service
