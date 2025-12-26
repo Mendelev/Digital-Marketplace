@@ -1,0 +1,29 @@
+inputSet:
+  pipeline:
+    identifier: catalog_service_build
+    template:
+      templateInputs:
+        variables:
+          - name: serviceName
+            type: String
+            value: catalog-service
+          - name: artifactId
+            type: String
+            value: catalog-service
+          - name: jfrogBaseUrl
+            type: String
+            value: "\"https://trialq6tyqg.jfrog.io/artifactory\""
+          - name: jfrogRepoName
+            type: String
+            value: "\"libs-release-local\""
+        properties:
+          ci:
+            codebase:
+              build:
+                spec:
+                  branch: main
+                type: branch
+  name: catalog-service
+  identifier: catalogservice
+  orgIdentifier: default
+  projectIdentifier: digitalmarketplace
