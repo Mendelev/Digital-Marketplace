@@ -11,8 +11,18 @@ template:
       command: |-
         mkdir -p ~/.m2
 
+        # Normalize user-provided values (UI sometimes stores them with quotes)
+        JFROG_BASE_URL_RAW='<+pipeline.variables.jfrogBaseUrl>'
+        JFROG_REPO_NAME_RAW='<+pipeline.variables.jfrogRepoName>'
+        JFROG_BASE_URL="$(printf '%s' "$JFROG_BASE_URL_RAW" | tr -d '"')"
+        JFROG_REPO_NAME="$(printf '%s' "$JFROG_REPO_NAME_RAW" | tr -d '"')"
+        JFROG_BASE_URL="${JFROG_BASE_URL%/}"
+
+        JFROG_USERNAME='<+secrets.getValue("account.jfrog_username")>'
+        JFROG_TOKEN='<+secrets.getValue("account.jfrog_token")>'
+
         # Generate settings.xml with JFrog credentials and deployment repository
-        cat > ~/.m2/settings.xml << 'EOF'
+        cat > ~/.m2/settings.xml << EOF
         <?xml version="1.0" encoding="UTF-8"?>
         <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -22,18 +32,18 @@ template:
           <servers>
             <server>
               <id>snapshots</id>
-              <username><+secrets.getValue("account.jfrog_username")></username>
-              <password><+secrets.getValue("account.jfrog_token")></password>
+              <username>$JFROG_USERNAME</username>
+              <password>$JFROG_TOKEN</password>
             </server>
             <server>
               <id>jfrog-releases</id>
-              <username><+secrets.getValue("account.jfrog_username")></username>
-              <password><+secrets.getValue("account.jfrog_token")></password>
+              <username>$JFROG_USERNAME</username>
+              <password>$JFROG_TOKEN</password>
             </server>
             <server>
               <id>jfrog-snapshots</id>
-              <username><+secrets.getValue("account.jfrog_username")></username>
-              <password><+secrets.getValue("account.jfrog_token")></password>
+              <username>$JFROG_USERNAME</username>
+              <password>$JFROG_TOKEN</password>
             </server>
           </servers>
           
@@ -45,12 +55,12 @@ template:
                 <activeByDefault>true</activeByDefault>
               </activation>
               <properties>
-                <altDeploymentRepository>snapshots::default::<+pipeline.variables.jfrogBaseUrl>/<+pipeline.variables.jfrogRepoName></altDeploymentRepository>
+                <altDeploymentRepository>snapshots::default::$JFROG_BASE_URL/$JFROG_REPO_NAME</altDeploymentRepository>
               </properties>
               <repositories>
                 <repository>
                   <id>jfrog-releases</id>
-                  <url><+pipeline.variables.jfrogBaseUrl>/libs-release-local</url>
+                  <url>$JFROG_BASE_URL/libs-release-local</url>
                   <releases>
                     <enabled>true</enabled>
                   </releases>
@@ -60,7 +70,7 @@ template:
                 </repository>
                 <repository>
                   <id>jfrog-snapshots</id>
-                  <url><+pipeline.variables.jfrogBaseUrl>/libs-snapshot-local</url>
+                  <url>$JFROG_BASE_URL/libs-snapshot-local</url>
                   <releases>
                     <enabled>false</enabled>
                   </releases>
