@@ -1,4 +1,9 @@
 inputSet:
+  name: order-service-input
+  tags: {}
+  identifier: orderserviceinput
+  orgIdentifier: default
+  projectIdentifier: digitalmarketplace
   pipeline:
     identifier: order_service_build
     template:
@@ -6,10 +11,10 @@ inputSet:
         variables:
           - name: serviceName
             type: String
-            value: search-service
+            value: order-service
           - name: artifactId
             type: String
-            value: search-service
+            value: order-service
           - name: jfrogBaseUrl
             type: String
             value: https://trialq6tyqg.jfrog.io/artifactory
@@ -20,10 +25,6 @@ inputSet:
           ci:
             codebase:
               build:
+                type: branch
                 spec:
                   branch: main
-                type: branch
-  name: order-service-input
-  identifier: orderserviceinput
-  orgIdentifier: default
-  projectIdentifier: digitalmarketplace
