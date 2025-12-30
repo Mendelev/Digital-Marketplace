@@ -1,0 +1,37 @@
+pipeline:
+  name: order_service_build
+  identifier: order_service_build
+  tags: {}
+  variables:
+    - name: serviceName
+      type: String
+      description: "Service directory name"
+      value: order-service
+    - name: artifactId
+      type: String
+      description: "Maven artifactId from pom.xml"
+      value: order-service
+    - name: jfrogBaseUrl
+      type: String
+      description: "JFrog Artifactory base URL"
+      value: https://trialq6tyqg.jfrog.io/artifactory
+    - name: jfrogRepoName
+      type: String
+      description: "JFrog repository name"
+      value: libs-snapshot-local
+    - name: dynamicVersion
+      type: String
+      description: "Dynamic version"
+      required: false
+      value: ""
+  template:
+    templateRef: org.Deploy_Services
+    versionLabel: version1
+    gitBranch: main
+    templateInputs:
+      properties:
+        ci:
+          codebase:
+            build: <+input>
+  projectIdentifier: digitalmarketplace
+  orgIdentifier: default
