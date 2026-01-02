@@ -32,7 +32,7 @@ pipeline:
       variables:
         - name: serviceName
           type: String
-          value: <+input>.allowedValues(auth-service,user-service,catalog-service,cart-service,shipping-service,payment-service,inventory-service,shipping-service,search-service)
+          value: <+input>.allowedValues(auth-service,user-service,catalog-service,cart-service,order-service,payment-service,inventory-service,shipping-service,search-service)
         - name: artifactId
           type: String
           value: <+input>.executionInput()
