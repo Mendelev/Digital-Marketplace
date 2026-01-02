@@ -16,7 +16,7 @@ template:
         type: String
         description: "Maven artifactId (usually same as serviceName)"
         required: true
-        value: <+input>.executionInput()
+        value: ""
       - name: jfrogBaseUrl
         type: String
         description: "JFrog Artifactory base URL"

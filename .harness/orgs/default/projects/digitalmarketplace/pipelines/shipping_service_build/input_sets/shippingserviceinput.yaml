@@ -9,7 +9,7 @@ inputSet:
             value: shipping-service
           - name: artifactId
             type: String
-            value: <+input>.executionInput()
+            value: ""
           - name: jfrogBaseUrl
             type: String
             value: <+input>.default(https://trialq6tyqg.jfrog.io/artifactory).executionInput()

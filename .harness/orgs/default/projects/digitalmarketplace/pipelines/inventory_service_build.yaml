@@ -35,7 +35,7 @@ pipeline:
           value: <+input>.allowedValues(auth-service,user-service,catalog-service,cart-service,inventory-service,payment-service,inventory-service,shipping-service,search-service)
         - name: artifactId
           type: String
-          value: <+input>.executionInput()
+          value: ""
         - name: jfrogBaseUrl
           type: String
           value: <+input>.default(https://trialq6tyqg.jfrog.io/artifactory).executionInput()
