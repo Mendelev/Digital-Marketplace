@@ -1,0 +1,29 @@
+inputSet:
+  pipeline:
+    identifier: shipping_service_build
+    template:
+      templateInputs:
+        variables:
+          - name: serviceName
+            type: String
+            value: shipping-service
+          - name: artifactId
+            type: String
+            value: <+input>.executionInput()
+          - name: jfrogBaseUrl
+            type: String
+            value: <+input>.default(https://trialq6tyqg.jfrog.io/artifactory).executionInput()
+          - name: jfrogRepoName
+            type: String
+            value: <+input>.default(libs-snapshot-local).executionInput()
+        properties:
+          ci:
+            codebase:
+              build:
+                spec:
+                  branch: main
+                type: branch
+  name: shipping-service-input
+  identifier: shippingserviceinput
+  orgIdentifier: default
+  projectIdentifier: digitalmarketplace
