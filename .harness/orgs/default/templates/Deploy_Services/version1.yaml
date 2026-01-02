@@ -21,12 +21,12 @@ template:
         type: String
         description: "JFrog Artifactory base URL"
         required: true
-        value: <+input>.default("https://trialq6tyqg.jfrog.io/artifactory").executionInput()
+        value: <+input>.default(https://trialq6tyqg.jfrog.io/artifactory).executionInput()
       - name: jfrogRepoName
         type: String
         description: "JFrog repository name"
         required: true
-        value: <+input>.default("libs-snapshot-local").executionInput()
+        value: <+input>.default(libs-snapshot-local).executionInput()
       - name: dynamicVersion
         type: String
         description: "Dynamic version (auto-generated)"

@@ -38,10 +38,10 @@ pipeline:
           value: <+input>.executionInput()
         - name: jfrogBaseUrl
           type: String
-          value: <+input>.default("https://trialq6tyqg.jfrog.io/artifactory").executionInput()
+          value: <+input>.default(https://trialq6tyqg.jfrog.io/artifactory).executionInput()
         - name: jfrogRepoName
           type: String
-          value: <+input>.default("libs-snapshot-local").executionInput()
+          value: <+input>.default(libs-snapshot-local).executionInput()
       properties:
         ci:
           codebase:
