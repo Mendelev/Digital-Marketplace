@@ -1,0 +1,50 @@
+pipeline:
+  name: order_service_build
+  identifier: order_service_build
+  tags: {}
+  variables:
+    - name: serviceName
+      type: String
+      description: Service directory name
+      value: payment-service
+    - name: artifactId
+      type: String
+      description: Maven artifactId from pom.xml
+      value: payment-service
+    - name: jfrogBaseUrl
+      type: String
+      description: JFrog Artifactory base URL
+      value: https://trialq6tyqg.jfrog.io/artifactory
+    - name: jfrogRepoName
+      type: String
+      description: JFrog repository name
+      value: libs-snapshot-local
+    - name: dynamicVersion
+      type: String
+      description: Dynamic version
+      required: false
+      value: ""
+  template:
+    templateRef: org.Deploy_Services
+    versionLabel: version1
+    gitBranch: main
+    templateInputs:
+      variables:
+        - name: serviceName
+          type: String
+          value: <+input>.allowedValues(auth-service,user-service,catalog-service,cart-service,payment-service,payment-service,payment-service,shipping-service,search-service)
+        - name: artifactId
+          type: String
+          value: <+input>.executionInput()
+        - name: jfrogBaseUrl
+          type: String
+          value: <+input>.default(https://trialq6tyqg.jfrog.io/artifactory).executionInput()
+        - name: jfrogRepoName
+          type: String
+          value: <+input>.default(libs-snapshot-local).executionInput()
+      properties:
+        ci:
+          codebase:
+            build: <+input>
+  projectIdentifier: digitalmarketplace
+  orgIdentifier: default
