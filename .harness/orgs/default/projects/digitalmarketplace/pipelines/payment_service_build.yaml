@@ -1,6 +1,6 @@
 pipeline:
-  name: order_service_build
-  identifier: order_service_build
+  name: payment_service_build
+  identifier: payment_service_build
   tags: {}
   variables:
     - name: serviceName
