@@ -44,8 +44,8 @@ pipeline:
             steps:
               - step:
                   type: Run
-                  name: Build_Shared_Dependencies
-                  identifier: Build_Shared_Dependencies
+                  name: Build_Service
+                  identifier: Build_Service
                   spec:
                     connectorRef: account.harnessImage
                     image: maven:3.9-eclipse-temurin-21
@@ -54,17 +54,10 @@ pipeline:
                       echo "Installing shared-dtos..."
                       cd common/shared-dtos && mvn clean install -DskipTests
                       echo "Shared dependencies installed successfully"
-              - step:
-                  type: Run
-                  name: Build_Service
-                  identifier: Build_Service
-                  spec:
-                    connectorRef: account.harnessImage
-                    image: maven:3.9-eclipse-temurin-21
-                    shell: Sh
-                    command: |
+                      echo ""
+                      
                       echo "Building <+pipeline.variables.serviceName>..."
-                      cd <+pipeline.variables.serviceName> && \
+                      cd ../../<+pipeline.variables.serviceName> && \
                         mvn -B clean package -DskipTests
                       
                       echo "Build completed successfully"
