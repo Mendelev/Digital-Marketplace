@@ -56,11 +56,11 @@ pipeline:
                       cd common/shared-dtos && mvn clean install -DskipTests
                       echo "Shared dependencies installed successfully"
                       echo ""
-                      
+
                       echo "Building <+pipeline.variables.serviceName>..."
                       cd ../../<+pipeline.variables.serviceName> && \
                         mvn -B clean package -DskipTests
-                      
+
                       echo "Build completed successfully"
                       ls -lh target/*.jar
               - step:
@@ -72,10 +72,12 @@ pipeline:
                     config: oss
                     target:
                       type: repository
+                      workspace: .
                       detection: auto
                     advanced:
                       log:
                         level: info
+                      fail_on_severity: critical
                     privileged: true
                     auth:
                       access_token: <+secrets.getValue("account.snyk_access_token")>
