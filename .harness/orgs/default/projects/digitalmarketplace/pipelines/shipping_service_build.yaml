@@ -65,3 +65,21 @@ pipeline:
                   template:
                     templateRef: org.Generate_Maven_Settings
                     versionLabel: version1
+              - step:
+                  type: Snyk
+                  name: Snyk_1
+                  identifier: Snyk_1
+                  spec:
+                    mode: orchestration
+                    config: oss
+                    target:
+                      type: repository
+                      detection: auto
+                    advanced:
+                      log:
+                        level: info
+                    privileged: true
+                    auth:
+                      access_token: <+secrets.getValue("account.snyk_access_token")>
+                    tool:
+                      ingest_tool_severity: true
