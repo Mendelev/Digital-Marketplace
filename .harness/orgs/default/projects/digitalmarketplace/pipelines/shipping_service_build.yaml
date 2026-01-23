@@ -65,14 +65,16 @@ pipeline:
                       ls -lh target/*.jar
               - step:
                   type: Snyk
-                  name: Snyk_1
-                  identifier: Snyk_1
+                  name: Snyk_Security_Scan
+                  identifier: Snyk_Security_Scan
                   spec:
                     mode: orchestration
                     config: oss
                     target:
                       type: repository
-                      workspace: ..
+                      name: <+pipeline.variables.serviceName>
+                      variant: <+codebase.branch>
+                      workspace: /harness/<+pipeline.variables.serviceName>
                       detection: auto
                     advanced:
                       log:
@@ -82,4 +84,4 @@ pipeline:
                     auth:
                       access_token: <+secrets.getValue("account.snyk_access_token")>
                     tool:
-                      ingest_tool_severity: false
+                      ingest_tool_severity: true
