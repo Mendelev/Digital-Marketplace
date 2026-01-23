@@ -7,27 +7,27 @@ pipeline:
   variables:
     - name: serviceName
       type: String
-      description: "Service directory name"
+      description: Service directory name
       required: true
       value: shipping-service
     - name: artifactId
       type: String
-      description: "Maven artifactId from pom.xml"
+      description: Maven artifactId from pom.xml
       required: true
       value: shipping-service
     - name: jfrogBaseUrl
       type: String
-      description: "JFrog Artifactory base URL (without repo name)"
+      description: JFrog Artifactory base URL (without repo name)
       required: true
       value: https://trialq6tyqg.jfrog.io/artifactory
     - name: jfrogRepoName
       type: String
-      description: "JFrog repository name for snapshots"
+      description: JFrog repository name for snapshots
       required: true
       value: libs-snapshot-local
     - name: dynamicVersion
       type: String
-      description: "Dynamic version with build number"
+      description: Dynamic version with build number
       required: false
       value: ""
       default: ""
@@ -64,10 +64,4 @@ pipeline:
                   identifier: Generate_Maven_Settings
                   template:
                     templateRef: org.Generate_Maven_Settings
-                    versionLabel: version1
-              - step:
-                  name: Deploy_to_Artifactory
-                  identifier: Deploy_to_Artifactory
-                  template:
-                    templateRef: org.Deploy_to_Artifactory
                     versionLabel: version1
