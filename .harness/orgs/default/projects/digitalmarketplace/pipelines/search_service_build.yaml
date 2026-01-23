@@ -15,22 +15,6 @@ pipeline:
       description: "Maven artifactId from pom.xml"
       required: true
       value: search-service
-    - name: jfrogBaseUrl
-      type: String
-      description: "JFrog Artifactory base URL (without repo name)"
-      required: true
-      value: https://trialq6tyqg.jfrog.io/artifactory
-    - name: jfrogRepoName
-      type: String
-      description: "JFrog repository name for snapshots"
-      required: true
-      value: libs-snapshot-local
-    - name: dynamicVersion
-      type: String
-      description: "Dynamic version with build number"
-      required: false
-      value: ""
-      default: ""
   properties:
     ci:
       codebase:
@@ -55,19 +39,22 @@ pipeline:
             os: Linux
             arch: Amd64
           runtime:
-            type: Docker
+            type: Cloud
             spec: {}
           execution:
             steps:
               - step:
-                  name: Generate_Maven_Settings
-                  identifier: Generate_Maven_Settings
-                  template:
-                    templateRef: org.Generate_Maven_Settings
-                    versionLabel: version1
-              - step:
-                  name: Deploy_to_Artifactory
-                  identifier: Deploy_to_Artifactory
-                  template:
-                    templateRef: org.Deploy_to_Artifactory
-                    versionLabel: version1
+                  type: Run
+                  name: Build_Service
+                  identifier: Build_Service
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: maven:3.9-eclipse-temurin-21
+                    shell: Sh
+                    command: |
+                      echo "Building <+pipeline.variables.serviceName>..."
+                      cd <+pipeline.variables.serviceName> && \
+                        mvn -B clean package -DskipTests
+                      
+                      echo "Build completed successfully"
+                      ls -lh target/*.jar

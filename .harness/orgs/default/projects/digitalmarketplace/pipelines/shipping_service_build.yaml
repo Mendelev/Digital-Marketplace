@@ -15,22 +15,6 @@ pipeline:
       description: Maven artifactId from pom.xml
       required: true
       value: shipping-service
-    - name: jfrogBaseUrl
-      type: String
-      description: JFrog Artifactory base URL (without repo name)
-      required: true
-      value: https://trialq6tyqg.jfrog.io/artifactory
-    - name: jfrogRepoName
-      type: String
-      description: JFrog repository name for snapshots
-      required: true
-      value: libs-snapshot-local
-    - name: dynamicVersion
-      type: String
-      description: Dynamic version with build number
-      required: false
-      value: ""
-      default: ""
   properties:
     ci:
       codebase:
@@ -56,17 +40,24 @@ pipeline:
             arch: Amd64
           runtime:
             type: Cloud
-            spec:
-              imageSpec:
-                imageName: ubuntu-latest
+            spec: {}
           execution:
             steps:
               - step:
-                  name: Generate_Maven_Settings
-                  identifier: Generate_Maven_Settings
-                  template:
-                    templateRef: org.Generate_Maven_Settings
-                    versionLabel: version1
+                  type: Run
+                  name: Build_Service
+                  identifier: Build_Service
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: maven:3.9-eclipse-temurin-21
+                    shell: Sh
+                    command: |
+                      echo "Building <+pipeline.variables.serviceName>..."
+                      cd <+pipeline.variables.serviceName> && \
+                        mvn -B clean package -DskipTests
+                      
+                      echo "Build completed successfully"
+                      ls -lh target/*.jar
               - step:
                   type: Snyk
                   name: Snyk_1

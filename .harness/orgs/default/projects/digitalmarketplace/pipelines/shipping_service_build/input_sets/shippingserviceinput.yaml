@@ -15,12 +15,6 @@ inputSet:
           - name: artifactId
             type: String
             value: shipping-service
-          - name: jfrogBaseUrl
-            type: String
-            value: https://trialq6tyqg.jfrog.io/artifactory
-          - name: jfrogRepoName
-            type: String
-            value: libs-snapshot-local
         properties:
           ci:
             codebase:

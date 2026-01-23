@@ -10,12 +10,6 @@ inputSet:
           - name: artifactId
             type: String
             value: catalog-service
-          - name: jfrogBaseUrl
-            type: String
-            value: "\"https://trialq6tyqg.jfrog.io/artifactory\""
-          - name: jfrogRepoName
-            type: String
-            value: "\"libs-release-local\""
         properties:
           ci:
             codebase:
