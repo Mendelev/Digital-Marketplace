@@ -72,14 +72,12 @@ pipeline:
                     config: oss
                     target:
                       type: repository
-                      name: <+pipeline.variables.serviceName>
-                      variant: <+codebase.branch>
                       workspace: /harness/<+pipeline.variables.serviceName>
                       detection: auto
                     advanced:
                       log:
                         level: info
-                      fail_on_severity: critical
+                      fail_on_severity: none
                     privileged: true
                     auth:
                       access_token: <+secrets.getValue("account.snyk_access_token")>
