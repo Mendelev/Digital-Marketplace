@@ -55,8 +55,10 @@ pipeline:
             os: Linux
             arch: Amd64
           runtime:
-            type: Docker
-            spec: {}
+            type: Cloud
+            spec:
+              imageSpec:
+                imageName: ubuntu-latest
           execution:
             steps:
               - step:
